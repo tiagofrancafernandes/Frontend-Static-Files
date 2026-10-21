@@ -106,7 +106,8 @@ function folderExists(targetFolder) {
 }
 
 function getAbsoluteUrl(relPath) {
-    return new URL(relPath, window.location.href).href;
+    const clean = relPath.replace(/^[\/\\]+/, '');
+    return new URL(`/${clean}`, window.location.origin).href;
 }
 
 // Build hierarchical node
@@ -218,7 +219,7 @@ function renderFolderNodeHtml(node, depth = 0) {
                         <span>Copiar URL</span>
                     </button>
                     <a
-                        href="./${file.fullPath}"
+                        href="/${file.fullPath}"
                         class="btn-action btn-view"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -334,7 +335,7 @@ function renderFlatView(files) {
                                         <span>Copiar URL</span>
                                     </button>
                                     <a
-                                        href="./${file}"
+                                        href="/${file}"
                                         class="btn-action btn-view"
                                         target="_blank"
                                         rel="noopener noreferrer"
@@ -431,7 +432,7 @@ function render() {
                         <span>Copiar URL</span>
                     </button>
                     <a
-                        href="./${file.fullPath}"
+                        href="/${file.fullPath}"
                         class="btn-action btn-view"
                         target="_blank"
                         rel="noopener noreferrer"
