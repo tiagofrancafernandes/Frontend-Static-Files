@@ -4,9 +4,6 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Index de Arquivos & Protótipos</title>
-        <script type="module">
-            import 'iconify-icon';
-        </script>
         <style>
             :root {
                 --bg: #090d16;
@@ -21,8 +18,11 @@
                 --border-subtle: #1e293b;
                 --badge-bg: rgba(56, 189, 248, 0.12);
                 --badge-text: #7dd3fc;
+                --badge-folder-bg: rgba(251, 191, 36, 0.12);
+                --badge-folder-text: #fcd34d;
                 --success: #34d399;
                 --success-bg: rgba(52, 211, 153, 0.12);
+                --danger: #f87171;
             }
 
             * {
@@ -62,8 +62,16 @@
             .header-row {
                 display: flex;
                 align-items: center;
-                gap: 0.85rem;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 1rem;
                 margin-bottom: 0.5rem;
+            }
+
+            .header-title-box {
+                display: flex;
+                align-items: center;
+                gap: 0.85rem;
             }
 
             .header-icon {
@@ -79,25 +87,75 @@
 
             .subtitle {
                 color: var(--text-muted);
-                font-size: 0.975rem;
+                font-size: 0.95rem;
                 line-height: 1.5;
             }
 
-            /* Search and Toolbar */
+            .base-indicator-bar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                background-color: rgba(56, 189, 248, 0.08);
+                border: 1px solid rgba(56, 189, 248, 0.25);
+                border-radius: 0.65rem;
+                padding: 0.75rem 1rem;
+                margin-top: 1rem;
+                font-size: 0.875rem;
+            }
+
+            .base-indicator-left {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--badge-text);
+            }
+
+            .base-path-tag {
+                background-color: var(--bg-card);
+                color: var(--accent);
+                padding: 0.2rem 0.55rem;
+                border-radius: 0.35rem;
+                font-family: monospace;
+                font-weight: 600;
+            }
+
+            .btn-change-base {
+                background-color: var(--bg-surface);
+                border: 1px solid var(--border);
+                color: var(--text-main);
+                padding: 0.35rem 0.75rem;
+                border-radius: 0.45rem;
+                font-size: 0.8rem;
+                font-weight: 500;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                transition: all 0.15s;
+            }
+
+            .btn-change-base:hover {
+                border-color: var(--accent);
+                color: var(--accent);
+            }
+
+            /* Toolbar */
             .toolbar {
                 display: flex;
                 flex-wrap: wrap;
                 gap: 1rem;
                 align-items: center;
                 justify-content: space-between;
-                margin-bottom: 2rem;
+                margin-bottom: 1.75rem;
             }
 
             .search-wrapper {
                 position: relative;
                 flex: 1;
                 min-width: 280px;
-                max-width: 540px;
+                max-width: 500px;
             }
 
             .search-icon {
@@ -112,7 +170,7 @@
 
             .search-input {
                 width: 100%;
-                padding: 0.8rem 2.5rem 0.8rem 2.85rem;
+                padding: 0.75rem 2.5rem 0.75rem 2.75rem;
                 border-radius: 0.65rem;
                 border: 1px solid var(--border);
                 background-color: var(--bg-surface);
@@ -151,7 +209,29 @@
             .toolbar-actions {
                 display: flex;
                 align-items: center;
+                flex-wrap: wrap;
                 gap: 0.75rem;
+            }
+
+            .btn-view-toggle {
+                background-color: var(--bg-surface);
+                border: 1px solid var(--border);
+                color: var(--text-muted);
+                padding: 0.5rem 0.85rem;
+                border-radius: 0.5rem;
+                font-size: 0.85rem;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.4rem;
+                transition: all 0.15s;
+            }
+
+            .btn-view-toggle:hover,
+            .btn-view-toggle.active {
+                color: var(--accent);
+                border-color: var(--accent);
+                background-color: rgba(56, 189, 248, 0.08);
             }
 
             .stats-badge {
@@ -167,26 +247,7 @@
                 border: 1px solid rgba(56, 189, 248, 0.2);
             }
 
-            .btn-toggle-all {
-                background-color: var(--bg-surface);
-                border: 1px solid var(--border);
-                color: var(--text-muted);
-                padding: 0.5rem 0.85rem;
-                border-radius: 0.5rem;
-                font-size: 0.85rem;
-                cursor: pointer;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-                transition: all 0.15s;
-            }
-
-            .btn-toggle-all:hover {
-                color: var(--text-main);
-                border-color: var(--accent);
-            }
-
-            /* Index Section */
+            /* Index container */
             .index-container {
                 background-color: var(--bg-surface);
                 border: 1px solid var(--border);
@@ -198,58 +259,91 @@
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 1.25rem 1.5rem;
-                background-color: rgba(30, 41, 59, 0.4);
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                padding: 1rem 1.25rem;
+                background-color: rgba(30, 41, 59, 0.45);
                 border-bottom: 1px solid var(--border);
             }
 
-            .index-title {
+            .breadcrumbs {
                 display: flex;
                 align-items: center;
-                gap: 0.6rem;
-                font-size: 1.15rem;
-                font-weight: 600;
+                flex-wrap: wrap;
+                gap: 0.4rem;
+                font-size: 0.875rem;
             }
 
-            .index-title iconify-icon {
+            .crumb-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                color: var(--text-muted);
+                cursor: pointer;
+                text-decoration: none;
+                padding: 0.2rem 0.4rem;
+                border-radius: 0.35rem;
+                transition: all 0.15s;
+            }
+
+            .crumb-item:hover {
                 color: var(--accent);
-                font-size: 1.35rem;
+                background-color: var(--bg-card);
             }
 
-            /* Folder Accordion */
-            .folder-item {
+            .crumb-item.current {
+                color: var(--text-main);
+                font-weight: 600;
+                cursor: default;
+                background: none;
+            }
+
+            .crumb-separator {
+                color: var(--border);
+                font-size: 0.75rem;
+            }
+
+            /* Tree items */
+            .tree-node {
                 border-bottom: 1px solid var(--border-subtle);
             }
 
-            .folder-item:last-child {
+            .tree-node:last-child {
                 border-bottom: none;
             }
 
-            .folder-trigger {
-                width: 100%;
+            .tree-folder-row {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                padding: 1.1rem 1.5rem;
+                padding: 0.9rem 1.25rem;
                 background-color: transparent;
-                border: none;
-                color: inherit;
-                text-align: left;
                 cursor: pointer;
-                font-size: 1rem;
                 transition: background-color 0.15s;
+                gap: 0.75rem;
             }
 
-            .folder-trigger:hover {
+            .tree-folder-row:hover {
                 background-color: rgba(51, 65, 85, 0.25);
             }
 
-            .folder-trigger-left {
+            .tree-folder-left {
                 display: flex;
                 align-items: center;
                 gap: 0.75rem;
                 flex: 1;
                 min-width: 0;
+            }
+
+            .folder-chevron-icon {
+                font-size: 0.85rem;
+                color: var(--text-muted);
+                transition: transform 0.2s ease;
+                flex-shrink: 0;
+            }
+
+            .tree-node.expanded > .tree-folder-row .folder-chevron-icon {
+                transform: rotate(90deg);
             }
 
             .folder-icon {
@@ -258,74 +352,82 @@
                 flex-shrink: 0;
             }
 
-            .folder-name {
+            .folder-title-name {
                 font-weight: 600;
                 color: var(--text-main);
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                font-size: 0.975rem;
             }
 
-            .folder-count-pill {
+            .folder-stats-pill {
                 font-size: 0.75rem;
-                padding: 0.2rem 0.6rem;
+                padding: 0.2rem 0.65rem;
                 border-radius: 9999px;
-                background-color: var(--bg-card);
-                color: var(--text-muted);
+                background-color: var(--badge-folder-bg);
+                color: var(--badge-folder-text);
                 margin-left: 0.5rem;
                 flex-shrink: 0;
+                font-weight: 500;
             }
 
-            .folder-trigger-right {
+            .tree-folder-right {
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
+                flex-shrink: 0;
             }
 
-            .folder-chevron {
-                font-size: 1rem;
+            .btn-share-folder {
+                background-color: var(--bg-card);
+                border: 1px solid var(--border);
                 color: var(--text-muted);
-                transition: transform 0.2s ease;
+                padding: 0.35rem 0.65rem;
+                border-radius: 0.45rem;
+                font-size: 0.775rem;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.35rem;
+                transition: all 0.15s;
             }
 
-            .folder-item.open .folder-chevron {
-                transform: rotate(180deg);
+            .btn-share-folder:hover {
+                color: var(--accent);
+                border-color: var(--accent);
             }
 
-            /* File List inside folder */
-            .folder-content {
+            /* Nested children */
+            .tree-children {
                 display: none;
-                padding: 0.75rem 1.5rem 1.25rem;
-                background-color: rgba(15, 23, 42, 0.75);
+                padding-left: 1.5rem;
+                border-left: 2px solid var(--border);
+                margin-left: 1.75rem;
+                background-color: rgba(15, 23, 42, 0.4);
             }
 
-            .folder-item.open .folder-content {
+            .tree-node.expanded > .tree-children {
                 display: block;
             }
 
-            .file-list {
-                display: flex;
-                flex-direction: column;
-                gap: 0.65rem;
-            }
-
-            .file-row {
+            /* File row */
+            .tree-file-row {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 gap: 1rem;
-                padding: 0.85rem 1.15rem;
-                background-color: var(--bg-card);
-                border: 1px solid var(--border);
-                border-radius: 0.6rem;
-                transition:
-                    background-color 0.15s,
-                    border-color 0.15s;
+                padding: 0.75rem 1.25rem 0.75rem 0.5rem;
+                border-bottom: 1px solid var(--border-subtle);
+                transition: background-color 0.15s;
             }
 
-            .file-row:hover {
-                background-color: var(--bg-card-hover);
-                border-color: rgba(56, 189, 248, 0.4);
+            .tree-file-row:last-child {
+                border-bottom: none;
+            }
+
+            .tree-file-row:hover {
+                background-color: rgba(51, 65, 85, 0.2);
             }
 
             .file-details {
@@ -374,8 +476,8 @@
             .btn-action {
                 display: inline-flex;
                 align-items: center;
-                gap: 0.4rem;
-                padding: 0.45rem 0.85rem;
+                gap: 0.35rem;
+                padding: 0.4rem 0.8rem;
                 border-radius: 0.45rem;
                 font-size: 0.825rem;
                 font-weight: 500;
@@ -386,7 +488,7 @@
             }
 
             .btn-copy {
-                background-color: var(--bg-surface);
+                background-color: var(--bg-card);
                 color: var(--text-muted);
             }
 
@@ -413,6 +515,36 @@
                 border-color: var(--accent-hover);
             }
 
+            /* Flat view (Listar Todos) */
+            .flat-folder-block {
+                border-bottom: 1px solid var(--border);
+            }
+
+            .flat-folder-block:last-child {
+                border-bottom: none;
+            }
+
+            .flat-folder-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 1rem 1.25rem;
+                background-color: rgba(30, 41, 59, 0.35);
+            }
+
+            .flat-folder-title {
+                display: flex;
+                align-items: center;
+                gap: 0.6rem;
+                font-weight: 600;
+                color: #fbbf24;
+                font-size: 0.975rem;
+            }
+
+            .flat-files-container {
+                padding: 0.5rem 1.25rem 1rem;
+            }
+
             /* Empty state */
             .empty-state {
                 text-align: center;
@@ -426,11 +558,224 @@
                 color: var(--text-muted);
             }
 
-            .empty-state p {
-                font-size: 1rem;
+            /* Password Screen / Lock Overlay */
+            .auth-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background-color: rgba(9, 13, 22, 0.95);
+                backdrop-filter: blur(8px);
+                z-index: 10000;
+                align-items: center;
+                justify-content: center;
+                padding: 1.5rem;
             }
 
-            /* Toast Notification */
+            .auth-overlay.show {
+                display: flex;
+            }
+
+            .auth-card {
+                background-color: var(--bg-surface);
+                border: 1px solid var(--border);
+                border-radius: 1rem;
+                padding: 2.25rem;
+                width: 100%;
+                max-width: 440px;
+                box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+                text-align: center;
+            }
+
+            .auth-icon {
+                font-size: 3rem;
+                color: var(--accent);
+                margin-bottom: 1rem;
+            }
+
+            .auth-title {
+                font-size: 1.5rem;
+                font-weight: 700;
+                margin-bottom: 0.5rem;
+            }
+
+            .auth-desc {
+                color: var(--text-muted);
+                font-size: 0.925rem;
+                line-height: 1.5;
+                margin-bottom: 1.75rem;
+            }
+
+            .auth-form {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .auth-input-group {
+                position: relative;
+            }
+
+            .auth-input {
+                width: 100%;
+                padding: 0.85rem 1rem;
+                background-color: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: 0.5rem;
+                color: var(--text-main);
+                font-size: 1rem;
+                outline: none;
+                letter-spacing: 0.1em;
+                text-align: center;
+            }
+
+            .auth-input:focus {
+                border-color: var(--accent);
+                box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+            }
+
+            .auth-error {
+                color: var(--danger);
+                font-size: 0.85rem;
+                display: none;
+                margin-top: -0.5rem;
+            }
+
+            .auth-btn {
+                background-color: var(--accent);
+                color: #0f172a;
+                border: none;
+                border-radius: 0.5rem;
+                padding: 0.85rem;
+                font-size: 0.95rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background-color 0.15s;
+            }
+
+            .auth-btn:hover {
+                background-color: var(--accent-hover);
+            }
+
+            /* Modal General */
+            .modal-backdrop {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background-color: rgba(0, 0, 0, 0.75);
+                backdrop-filter: blur(4px);
+                z-index: 10001;
+                align-items: center;
+                justify-content: center;
+                padding: 1.25rem;
+            }
+
+            .modal-backdrop.show {
+                display: flex;
+            }
+
+            .modal-box {
+                background-color: var(--bg-surface);
+                border: 1px solid var(--border);
+                border-radius: 0.85rem;
+                width: 100%;
+                max-width: 520px;
+                padding: 1.75rem;
+                box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.8);
+            }
+
+            .modal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 1.25rem;
+                padding-bottom: 0.75rem;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .modal-title {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 1.15rem;
+                font-weight: 600;
+            }
+
+            .modal-close-btn {
+                background: none;
+                border: none;
+                color: var(--text-muted);
+                font-size: 1.5rem;
+                cursor: pointer;
+                line-height: 1;
+            }
+
+            .modal-close-btn:hover {
+                color: var(--text-main);
+            }
+
+            .modal-body {
+                display: flex;
+                flex-direction: column;
+                gap: 1.25rem;
+            }
+
+            .modal-field {
+                display: flex;
+                flex-direction: column;
+                gap: 0.4rem;
+            }
+
+            .modal-label {
+                font-size: 0.875rem;
+                font-weight: 500;
+                color: var(--text-muted);
+            }
+
+            .modal-input {
+                width: 100%;
+                padding: 0.75rem 0.9rem;
+                background-color: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: 0.5rem;
+                color: var(--text-main);
+                font-size: 0.9rem;
+                outline: none;
+            }
+
+            .modal-input:focus {
+                border-color: var(--accent);
+            }
+
+            .checkbox-label {
+                display: flex;
+                align-items: flex-start;
+                gap: 0.65rem;
+                font-size: 0.875rem;
+                cursor: pointer;
+                color: var(--text-main);
+                line-height: 1.4;
+            }
+
+            .checkbox-label input {
+                margin-top: 0.2rem;
+                accent-color: var(--accent);
+            }
+
+            .checkbox-subtext {
+                display: block;
+                color: var(--text-muted);
+                font-size: 0.775rem;
+                margin-top: 0.15rem;
+            }
+
+            .modal-footer {
+                display: flex;
+                justify-content: flex-end;
+                gap: 0.75rem;
+                margin-top: 1.5rem;
+            }
+
+            /* Toast */
             .toast {
                 position: fixed;
                 bottom: 2rem;
@@ -451,7 +796,7 @@
                 transition:
                     transform 0.25s ease,
                     opacity 0.25s ease;
-                z-index: 9999;
+                z-index: 10002;
             }
 
             .toast.show {
@@ -469,13 +814,30 @@
         <div class="container">
             <header>
                 <div class="header-row">
-                    <iconify-icon icon="fa7-solid:layer-group" class="header-icon"></iconify-icon>
-                    <h1>Index de Arquivos & Protótipos</h1>
+                    <div class="header-title-box">
+                        <iconify-icon icon="fa7-solid:layer-group" class="header-icon"></iconify-icon>
+                        <h1>Index de Arquivos & Protótipos</h1>
+                    </div>
                 </div>
                 <p class="subtitle">
-                    Explore os arquivos HTML e protótipos estáticos organizados por pasta. Pesquise, visualize ou copie
-                    a URL direta de qualquer arquivo.
+                    Navegação em árvore hierárquica por pastas e arquivos estáticos. Visualize páginas ou copie links de
+                    compartilhamento direto.
                 </p>
+
+                <!-- Indicator when custom base folder is active -->
+                <div id="base-indicator" class="base-indicator-bar" style="display: none">
+                    <div class="base-indicator-left">
+                        <iconify-icon icon="fa7-solid:folder-open"></iconify-icon>
+                        <span>
+                            Pasta base ativa:
+                            <span id="current-base-name" class="base-path-tag">files</span>
+                        </span>
+                    </div>
+                    <button id="btn-open-change-base" class="btn-change-base" type="button">
+                        <iconify-icon icon="fa7-solid:sliders"></iconify-icon>
+                        <span>Mudar Pasta Base</span>
+                    </button>
+                </div>
             </header>
 
             <div class="toolbar">
@@ -485,16 +847,16 @@
                         id="search"
                         class="search-input"
                         type="text"
-                        placeholder="Buscar por nome de arquivo ou pasta..."
+                        placeholder="Buscar arquivos em files/..."
                         autocomplete="off"
                     />
                     <button id="search-clear" class="search-clear" title="Limpar busca">&times;</button>
                 </div>
 
                 <div class="toolbar-actions">
-                    <button id="btn-toggle-all" class="btn-toggle-all" type="button">
-                        <iconify-icon icon="fa7-solid:folder-tree"></iconify-icon>
-                        <span id="btn-toggle-text">Expandir Todas</span>
+                    <button id="btn-toggle-view" class="btn-view-toggle" type="button">
+                        <iconify-icon icon="fa7-solid:list"></iconify-icon>
+                        <span id="btn-toggle-view-text">Listar Todos</span>
                     </button>
                     <div id="stats" class="stats-badge">
                         <iconify-icon icon="fa7-solid:file-code"></iconify-icon>
@@ -505,262 +867,168 @@
 
             <section class="index-container">
                 <div class="index-header">
-                    <div class="index-title">
-                        <iconify-icon icon="fa7-solid:folder-open"></iconify-icon>
-                        <span>Index de Diretórios</span>
-                    </div>
+                    <nav id="breadcrumbs" class="breadcrumbs">
+                        <!-- Rendered dynamically -->
+                    </nav>
                 </div>
 
                 <div id="index-content">
-                    <!-- Folders and files are dynamically generated here -->
+                    <!-- Tree or Flat content rendered here -->
                 </div>
             </section>
         </div>
 
+        <!-- Password Lock Screen (Shown when base is default and not yet authenticated) -->
+        <div id="auth-overlay" class="auth-overlay">
+            <div class="auth-card">
+                <iconify-icon icon="fa7-solid:lock" class="auth-icon"></iconify-icon>
+                <h2 class="auth-title">Acesso Restrito</h2>
+                <p class="auth-desc">
+                    Esta é a listagem padrão de todos os arquivos do projeto. Digite a senha para desbloquear o acesso.
+                </p>
+                <form id="auth-form" class="auth-form" onsubmit="return false;">
+                    <div class="auth-input-group">
+                        <input
+                            id="auth-password-input"
+                            class="auth-input"
+                            type="password"
+                            placeholder="Digite a senha"
+                            autocomplete="current-password"
+                            autofocus
+                        />
+                    </div>
+                    <div id="auth-error-msg" class="auth-error">Senha incorreta. Tente novamente.</div>
+                    <button id="auth-submit-btn" class="auth-btn" type="submit">Entrar</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Share Folder Modal -->
+        <div id="share-modal" class="modal-backdrop">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <iconify-icon icon="fa7-solid:share-nodes" style="color: var(--accent)"></iconify-icon>
+                        <span>Compartilhar Pasta</span>
+                    </div>
+                    <button id="share-modal-close" class="modal-close-btn" type="button">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-field">
+                        <label class="modal-label">Pasta selecionada:</label>
+                        <input id="share-folder-path" class="modal-input" type="text" readonly />
+                    </div>
+
+                    <div class="modal-field">
+                        <label class="checkbox-label">
+                            <input id="share-opt-setbase" type="checkbox" checked />
+                            <span>
+                                <strong>Definir como pasta base (set_base)</strong>
+                                <span class="checkbox-subtext">
+                                    Oculta as demais pastas do projeto e não exige senha de acesso para o cliente.
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="modal-field">
+                        <label class="checkbox-label">
+                            <input id="share-opt-folder" type="checkbox" />
+                            <span>
+                                <strong>Incluir parâmetro folder na URL (?folder=...)</strong>
+                                <span class="checkbox-subtext">
+                                    Abre e destaca esta pasta diretamente ao acessar o link.
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="modal-field">
+                        <label class="modal-label">URL de compartilhamento:</label>
+                        <input id="share-url-preview" class="modal-input" type="text" readonly />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="share-btn-test" class="btn-action btn-copy" type="button">
+                        <iconify-icon icon="fa7-solid:arrow-up-right-from-square"></iconify-icon>
+                        <span>Testar Link</span>
+                    </button>
+                    <button id="share-btn-copy" class="btn-action btn-view" type="button">
+                        <iconify-icon icon="fa7-solid:copy"></iconify-icon>
+                        <span>Copiar Link</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Base Modal -->
+        <div id="change-base-modal" class="modal-backdrop">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <iconify-icon icon="fa7-solid:sliders" style="color: var(--accent)"></iconify-icon>
+                        <span>Mudar Pasta Base</span>
+                    </div>
+                    <button id="change-base-close" class="modal-close-btn" type="button">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <!-- Password step if not already unlocked -->
+                    <div id="change-base-auth-step" style="display: none">
+                        <div class="modal-field">
+                            <label class="modal-label">Digite a senha para alterar a pasta base:</label>
+                            <input
+                                id="change-base-pass-input"
+                                class="modal-input"
+                                type="password"
+                                placeholder="Senha"
+                            />
+                            <div
+                                id="change-base-pass-error"
+                                class="auth-error"
+                                style="display: none; margin-top: 0.3rem"
+                            >
+                                Senha incorreta.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input step -->
+                    <div id="change-base-input-step">
+                        <div class="modal-field">
+                            <label class="modal-label">Caminho da nova pasta base (sob files/):</label>
+                            <input
+                                id="change-base-input"
+                                class="modal-input"
+                                type="text"
+                                placeholder="Ex: clientes/fulano (deixe vazio para restaurar padrão)"
+                            />
+                            <span class="checkbox-subtext" style="margin-top: 0.35rem">
+                                Deixe vazio ou digite "/" para voltar à visualização padrão de todas as pastas.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-reset-default-base" class="btn-action btn-copy" type="button">
+                        <span>Restaurar Padrão</span>
+                    </button>
+                    <button id="btn-apply-base" class="btn-action btn-view" type="button">
+                        <span>Aplicar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast notification -->
         <div id="toast" class="toast">
             <iconify-icon icon="fa7-solid:circle-check" class="toast-icon"></iconify-icon>
-            <span id="toast-message">URL copiada com sucesso!</span>
+            <span id="toast-message">Copiado com sucesso!</span>
         </div>
 
         <script id="__PAGES_DATA__" type="application/json">
             []
         </script>
 
-        <script type="module">
-            let allPages = [];
-            const indexContentEl = document.getElementById('index-content');
-            const searchInput = document.getElementById('search');
-            const searchClearBtn = document.getElementById('search-clear');
-            const statsText = document.getElementById('stats-text');
-            const btnToggleAll = document.getElementById('btn-toggle-all');
-            const btnToggleText = document.getElementById('btn-toggle-text');
-            const toastEl = document.getElementById('toast');
-            const toastMessageEl = document.getElementById('toast-message');
-
-            let toastTimeout = null;
-            let areAllExpanded = false;
-
-            // Load pages data: first from inlined JSON script, then fallback to /api/pages
-            async function loadPages() {
-                const scriptEl = document.getElementById('__PAGES_DATA__');
-                if (scriptEl && scriptEl.textContent) {
-                    try {
-                        const parsed = JSON.parse(scriptEl.textContent.trim());
-                        if (Array.isArray(parsed) && parsed.length > 0) {
-                            allPages = parsed;
-                        }
-                    } catch (e) {
-                        console.warn('Could not parse __PAGES_DATA__:', e);
-                    }
-                }
-
-                if (allPages.length === 0) {
-                    try {
-                        const res = await fetch('./api/pages');
-                        if (res.ok) {
-                            allPages = await res.json();
-                        }
-                    } catch (e) {
-                        console.warn('Could not fetch /api/pages:', e);
-                    }
-                }
-
-                render();
-            }
-
-            function showToast(message) {
-                toastMessageEl.textContent = message;
-                toastEl.classList.add('show');
-                if (toastTimeout) {
-                    clearTimeout(toastTimeout);
-                }
-                toastTimeout = setTimeout(() => {
-                    toastEl.classList.remove('show');
-                }, 2200);
-            }
-
-            function escapeHtml(str) {
-                return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-            }
-
-            function getFileUrl(relPath) {
-                const url = new URL(relPath, window.location.href);
-                return url.href;
-            }
-
-            function render(filter = '') {
-                const query = filter.trim().toLowerCase();
-                const filtered = allPages.filter((path) => path.toLowerCase().includes(query));
-
-                searchClearBtn.style.display = filter ? 'block' : 'none';
-
-                statsText.textContent = `${filtered.length} ${filtered.length === 1 ? 'arquivo' : 'arquivos'}`;
-
-                if (filtered.length === 0) {
-                    indexContentEl.innerHTML = `
-                        <div class="empty-state">
-                            <iconify-icon icon="fa7-solid:file-circle-question" class="empty-icon"></iconify-icon>
-                            <p>Nenhum arquivo encontrado para "<strong>${escapeHtml(filter)}</strong>".</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                // Group files by folder
-                const folderGroups = {};
-                for (const filePath of filtered) {
-                    const lastSlash = filePath.lastIndexOf('/');
-                    const dir = lastSlash !== -1 ? filePath.substring(0, lastSlash) : 'raiz';
-                    if (!folderGroups[dir]) {
-                        folderGroups[dir] = [];
-                    }
-                    folderGroups[dir].push(filePath);
-                }
-
-                // When filtering, automatically expand all matching folders
-                const shouldOpen = Boolean(query) || areAllExpanded;
-
-                let html = '';
-                let index = 0;
-                for (const [dir, files] of Object.entries(folderGroups)) {
-                    index++;
-                    const folderId = `folder-${index}`;
-                    const openClass = shouldOpen ? 'open' : '';
-
-                    html += `
-                        <div class="folder-item ${openClass}" id="${folderId}">
-                            <button class="folder-trigger" type="button" data-folder-id="${folderId}">
-                                <div class="folder-trigger-left">
-                                    <iconify-icon icon="${openClass ? 'fa7-solid:folder-open' : 'fa7-solid:folder'}" class="folder-icon"></iconify-icon>
-                                    <span class="folder-name">${escapeHtml(dir)}</span>
-                                    <span class="folder-count-pill">${files.length} ${files.length === 1 ? 'item' : 'itens'}</span>
-                                </div>
-                                <div class="folder-trigger-right">
-                                    <iconify-icon icon="fa7-solid:chevron-down" class="folder-chevron"></iconify-icon>
-                                </div>
-                            </button>
-                            <div class="folder-content">
-                                <div class="file-list">
-                                    ${files
-                                        .map((file) => {
-                                            const fileName = file.split('/').pop();
-                                            const fullUrl = getFileUrl(file);
-                                            return `
-                                            <div class="file-row">
-                                                <div class="file-details">
-                                                    <iconify-icon icon="fa7-solid:file-code" class="file-icon"></iconify-icon>
-                                                    <div class="file-meta">
-                                                        <div class="file-title">${escapeHtml(fileName)}</div>
-                                                        <div class="file-path">${escapeHtml(file)}</div>
-                                                    </div>
-                                                </div>
-                                                <div class="file-actions">
-                                                    <button
-                                                        type="button"
-                                                        class="btn-action btn-copy"
-                                                        data-url="${escapeHtml(fullUrl)}"
-                                                        title="Copiar link direto"
-                                                    >
-                                                        <iconify-icon icon="fa7-solid:copy"></iconify-icon>
-                                                        <span>Copiar URL</span>
-                                                    </button>
-                                                    <a
-                                                        href="/${file}"
-                                                        class="btn-action btn-view"
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        title="Visualizar arquivo em nova aba"
-                                                    >
-                                                        <iconify-icon icon="fa7-solid:arrow-up-right-from-square"></iconify-icon>
-                                                        <span>Visualizar</span>
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        `;
-                                        })
-                                        .join('')}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-
-                indexContentEl.innerHTML = html;
-            }
-
-            // Accordion toggle & Copy URL click delegation
-            indexContentEl.addEventListener('click', async (e) => {
-                const triggerBtn = e.target.closest('.folder-trigger');
-                if (triggerBtn) {
-                    const folderId = triggerBtn.getAttribute('data-folder-id');
-                    const folderEl = document.getElementById(folderId);
-                    if (folderEl) {
-                        const isOpen = folderEl.classList.toggle('open');
-                        const iconEl = folderEl.querySelector('.folder-icon');
-                        if (iconEl) {
-                            iconEl.setAttribute('icon', isOpen ? 'fa7-solid:folder-open' : 'fa7-solid:folder');
-                        }
-                    }
-                    return;
-                }
-
-                const copyBtn = e.target.closest('.btn-copy');
-                if (copyBtn) {
-                    const url = copyBtn.getAttribute('data-url');
-                    try {
-                        await navigator.clipboard.writeText(url);
-                        copyBtn.classList.add('copied');
-                        const label = copyBtn.querySelector('span');
-                        const icon = copyBtn.querySelector('iconify-icon');
-                        if (label) label.textContent = 'Copiado!';
-                        if (icon) icon.setAttribute('icon', 'fa7-solid:check');
-
-                        showToast('URL copiada para a área de transferência!');
-
-                        setTimeout(() => {
-                            copyBtn.classList.remove('copied');
-                            if (label) label.textContent = 'Copiar URL';
-                            if (icon) icon.setAttribute('icon', 'fa7-solid:copy');
-                        }, 1800);
-                    } catch (err) {
-                        console.error('Failed to copy URL:', err);
-                        showToast('Erro ao copiar URL.');
-                    }
-                }
-            });
-
-            // Expand/Collapse all
-            btnToggleAll.addEventListener('click', () => {
-                areAllExpanded = !areAllExpanded;
-                btnToggleText.textContent = areAllExpanded ? 'Recolher Todas' : 'Expandir Todas';
-                const folderItems = indexContentEl.querySelectorAll('.folder-item');
-                folderItems.forEach((item) => {
-                    if (areAllExpanded) {
-                        item.classList.add('open');
-                        const icon = item.querySelector('.folder-icon');
-                        if (icon) icon.setAttribute('icon', 'fa7-solid:folder-open');
-                    } else {
-                        item.classList.remove('open');
-                        const icon = item.querySelector('.folder-icon');
-                        if (icon) icon.setAttribute('icon', 'fa7-solid:folder');
-                    }
-                });
-            });
-
-            // Search input listener
-            searchInput.addEventListener('input', (e) => {
-                render(e.target.value);
-            });
-
-            // Clear search
-            searchClearBtn.addEventListener('click', () => {
-                searchInput.value = '';
-                render('');
-                searchInput.focus();
-            });
-
-            // Load on start
-            loadPages();
-        </script>
+        <script type="module" src="./main.js"></script>
     </body>
 </html>

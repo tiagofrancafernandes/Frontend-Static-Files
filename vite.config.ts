@@ -18,7 +18,7 @@ const IGNORED_DIRS = new Set([
 ]);
 
 /**
- * Recursively find all HTML files in the project excluding ignored directories.
+ * Recursively find all HTML files in a given directory.
  */
 function getHtmlFiles(dir: string, base = ''): string[] {
     let results: string[] = [];
@@ -45,6 +45,21 @@ function getHtmlFiles(dir: string, base = ''): string[] {
 }
 
 /**
+ * Retrieve all project HTML entries: root index.html + files/ directory.
+ */
+function getAllHtmlEntries(rootDir: string): string[] {
+    const list: string[] = [];
+    if (existsSync(join(rootDir, 'index.html'))) {
+        list.push('index.html');
+    }
+    const filesDir = join(rootDir, 'files');
+    if (existsSync(filesDir)) {
+        list.push(...getHtmlFiles(filesDir, 'files'));
+    }
+    return list;
+}
+
+/**
  * Recursively copy non-HTML assets to preserve full static tree in dist.
  */
 function copyStaticNonHtmlFiles(srcDir: string, destDir: string) {
@@ -54,6 +69,10 @@ function copyStaticNonHtmlFiles(srcDir: string, destDir: string) {
 
     const entries = readdirSync(srcDir, { withFileTypes: true });
     for (const entry of entries) {
+        if (entry.name.startsWith('.') || IGNORED_DIRS.has(entry.name)) {
+            continue;
+        }
+
         const srcPath = join(srcDir, entry.name);
         const destPath = join(destDir, entry.name);
 
@@ -75,9 +94,7 @@ function staticDirectoryPlugin(): Plugin {
         name: 'vite-plugin-static-directory',
         configureServer(server) {
             server.middlewares.use('/api/pages', (_req, res) => {
-                const pages = getHtmlFiles(ROOT_DIR)
-                    .filter((p) => p !== 'index.html')
-                    .sort();
+                const pages = getHtmlFiles(resolve(ROOT_DIR, 'files'), 'files').sort();
                 res.setHeader('Content-Type', 'application/json');
                 res.end(JSON.stringify(pages));
             });
@@ -90,9 +107,7 @@ function staticDirectoryPlugin(): Plugin {
                 ctx.filename === 'index.html';
 
             if (isRootIndex) {
-                const pages = getHtmlFiles(ROOT_DIR)
-                    .filter((p) => p !== 'index.html')
-                    .sort();
+                const pages = getHtmlFiles(resolve(ROOT_DIR, 'files'), 'files').sort();
 
                 return html.replace(
                     /<script id="__PAGES_DATA__" type="application\/json">[\s\S]*?<\/script>/,
@@ -108,7 +123,7 @@ function staticDirectoryPlugin(): Plugin {
 }
 
 export default defineConfig(() => {
-    const htmlFiles = getHtmlFiles(ROOT_DIR);
+    const htmlFiles = getAllHtmlEntries(ROOT_DIR);
     const rollupInput: Record<string, string> = {};
 
     for (const file of htmlFiles) {
