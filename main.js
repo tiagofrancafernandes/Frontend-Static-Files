@@ -532,7 +532,8 @@ changeBaseModal.addEventListener('click', (e) => {
 btnResetDefaultBase.addEventListener('click', () => {
     localStorage.removeItem('saved_base_folder');
     const url = new URL(window.location.origin + window.location.pathname);
-    url.searchParams.set('set_base', '');
+    url.searchParams.delete('set_base');
+    url.searchParams.delete('folder');
     window.location.href = url.href;
 });
 
@@ -559,7 +560,7 @@ btnApplyBase.addEventListener('click', () => {
         url.searchParams.set('set_base', newBase);
     } else {
         localStorage.removeItem('saved_base_folder');
-        url.searchParams.set('set_base', '');
+        url.searchParams.delete('set_base');
     }
     window.location.href = url.href;
 });
@@ -602,10 +603,16 @@ function checkInitialAccess() {
         }
     }
 
-    // If custom base active, show base indicator in header
+    // If custom base active, show base indicator in header and sync URL
     if (isCustomBase) {
         baseIndicatorEl.style.display = 'flex';
         currentBaseNameEl.textContent = `files/${activeBase}`;
+
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.searchParams.get('set_base') !== activeBase) {
+            currentUrl.searchParams.set('set_base', activeBase);
+            window.history.replaceState({}, '', currentUrl.href);
+        }
     } else {
         baseIndicatorEl.style.display = 'none';
     }
@@ -707,6 +714,20 @@ breadcrumbsEl.addEventListener('click', (e) => {
     if (crumb && !crumb.classList.contains('current')) {
         const targetPath = crumb.getAttribute('data-crumb');
         activeBase = targetPath;
+        if (activeBase && !isDefaultBase(activeBase)) {
+            localStorage.setItem('saved_base_folder', activeBase);
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('set_base', activeBase);
+            window.history.replaceState({}, '', currentUrl.href);
+            baseIndicatorEl.style.display = 'flex';
+            currentBaseNameEl.textContent = `files/${activeBase}`;
+        } else {
+            localStorage.removeItem('saved_base_folder');
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.delete('set_base');
+            window.history.replaceState({}, '', currentUrl.href);
+            baseIndicatorEl.style.display = 'none';
+        }
         render();
     }
 });
