@@ -1,0 +1,3051 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAT ERP & PDV - Automação Comercial Web & Smart TEF</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Tailwind Configuration -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Compact ERP Scrollbars */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    [x-cloak] { display: none !important; }
+
+    /* Bobina térmica realista de cupom fiscal */
+    .receipt-paper {
+      background: repeating-linear-gradient(
+        0deg,
+        #ffffff,
+        #ffffff 23px,
+        #f8fafc 24px
+      );
+      box-shadow: 0 4px 15px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Animação suave para modal e abas */
+    .tab-transition {
+      transition: all 0.15s ease-in-out;
+    }
+  </style>
+
+  <!-- Alpine.js Core -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body class="bg-slate-900 text-slate-800 antialiased font-sans select-none overflow-hidden"
+      x-data="nexusSystem()"
+      x-init="initApplication()"
+      @keydown.window="handleGlobalKeydown($event)">
+
+  <!-- ============================================================== -->
+  <!-- 1. TELA DE LOGIN PROFISSIONAL & ONE-CLICK DEMO MULTI-TENANT    -->
+  <!-- ============================================================== -->
+  <div x-show="!isAuthenticated"
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="opacity-0 scale-95"
+       x-transition:enter-end="opacity-100 scale-100"
+       x-transition:leave="transition ease-in duration-200"
+       x-transition:leave-start="opacity-100 scale-100"
+       x-transition:leave-end="opacity-0 scale-95"
+       class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-y-auto">
+
+    <!-- Background visual accents -->
+    <div class="absolute inset-0 bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:20px_20px] opacity-30 pointer-events-none"></div>
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-purple-600/15 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative w-full max-w-4xl bg-slate-900/95 border border-slate-800 rounded-2xl shadow-2xl backdrop-blur-md overflow-hidden grid grid-cols-1 lg:grid-cols-12 my-auto">
+
+      <!-- Lado Esquerdo: Banner & Perfis One-Click Demo -->
+      <div class="lg:col-span-5 p-6 bg-gradient-to-b from-slate-900 to-slate-950 border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col justify-between">
+        <div>
+          <!-- Logo & Badges -->
+          <div class="flex items-center gap-3 mb-5">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 via-teal-500 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-emerald-950">
+              <i data-lucide="layers" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-base font-extrabold text-white tracking-tight">SAT ERP</span>
+                <span class="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-mono font-bold uppercase">SaaS Cloud</span>
+              </div>
+              <p class="text-[11px] text-slate-400">Automação Comercial, PDV & Smart TEF</p>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-300 font-medium mb-3">
+            Acesso demonstrativo imediato com 1 clique. Selecione o papel desejado:
+          </p>
+
+          <!-- Cards de Perfis Rápidos -->
+          <div class="space-y-2">
+            <!-- Super Admin -->
+            <button type="button"
+                    @click="setDemoProfile('super_admin')"
+                    class="w-full p-2.5 rounded-xl border text-left flex items-start gap-3 transition group"
+                    :class="loginRole === 'super_admin' ? 'bg-purple-950/60 border-purple-500 ring-1 ring-purple-500' : 'bg-slate-800/40 border-slate-800 hover:border-slate-700 hover:bg-slate-800/70'">
+              <div class="w-8 h-8 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="shield-alert" class="w-4 h-4"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-white">Super Admin (SaaS Master)</span>
+                  <span class="text-[9px] bg-purple-500/20 text-purple-300 font-mono px-1 rounded font-bold">MASTER</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5">Gestão multi-tenant, matriz de módulos e licenças.</p>
+              </div>
+            </button>
+
+            <!-- Admin Lojista -->
+            <button type="button"
+                    @click="setDemoProfile('store_admin')"
+                    class="w-full p-2.5 rounded-xl border text-left flex items-start gap-3 transition group"
+                    :class="loginRole === 'store_admin' ? 'bg-blue-950/60 border-blue-500 ring-1 ring-blue-500' : 'bg-slate-800/40 border-slate-800 hover:border-slate-700 hover:bg-slate-800/70'">
+              <div class="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="store" class="w-4 h-4"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-white">Admin do Lojista (Tenant)</span>
+                  <span class="text-[9px] bg-blue-500/20 text-blue-300 font-mono px-1 rounded font-bold">EMPRESA</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5">Catálogo com abas, lotes, estoque e tokens Smart TEF.</p>
+              </div>
+            </button>
+
+            <!-- Caixa / Operador -->
+            <button type="button"
+                    @click="setDemoProfile('cashier')"
+                    class="w-full p-2.5 rounded-xl border text-left flex items-start gap-3 transition group"
+                    :class="loginRole === 'cashier' ? 'bg-emerald-950/60 border-emerald-500 ring-1 ring-emerald-500' : 'bg-slate-800/40 border-slate-800 hover:border-slate-700 hover:bg-slate-800/70'">
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                <i data-lucide="user-check" class="w-4 h-4"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-white">Operador de Caixa (POS)</span>
+                  <span class="text-[9px] bg-emerald-500/20 text-emerald-300 font-mono px-1 rounded font-bold">FRENTE</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-0.5">Bipagem com código de barras, bobina e finalização TEF/PIX.</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+          <span>v4.2.0 Desktop-Web</span>
+          <span class="flex items-center gap-1.5 text-emerald-400 font-semibold">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            SEFAZ & Smart TEF Online
+          </span>
+        </div>
+      </div>
+
+      <!-- Lado Direito: Formulário de Credenciais -->
+      <div class="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-center bg-slate-900">
+        <div class="max-w-sm mx-auto w-full">
+          <div class="mb-5">
+            <h2 class="text-lg font-bold text-white">Login no Terminal SAT</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Insira as credenciais corporativas para sincronização.</p>
+          </div>
+
+          <form @submit.prevent="executeLogin()" class="space-y-3.5">
+            <!-- Seletor de Tenant (Exibido para Admin Lojista e Operador) -->
+            <div x-show="loginRole !== 'super_admin'" x-transition>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Empresa / Assinante (Tenant)</label>
+              <div class="relative">
+                <select x-model="selectedTenantId"
+                        class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-3 pr-8 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition">
+                  <template x-for="tenant in tenantsList" :key="tenant.id">
+                    <option :value="tenant.id" x-text="tenant.tradeName + ' (' + tenant.code + ')'"></option>
+                  </template>
+                </select>
+              </div>
+            </div>
+
+            <!-- E-mail -->
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">E-mail Corporativo</label>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                  <i data-lucide="mail" class="w-4 h-4"></i>
+                </div>
+                <input type="email"
+                       x-model="loginEmail"
+                       required
+                       class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition font-mono">
+              </div>
+            </div>
+
+            <!-- Senha -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-semibold text-slate-300">Senha de Acesso</label>
+                <a href="javascript:void(0)" @click="showToastMessage('Solicitação de recuperação enviada ao TI.', 'info')" class="text-[11px] text-emerald-400 hover:underline">Esqueceu?</a>
+              </div>
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                  <i data-lucide="lock" class="w-4 h-4"></i>
+                </div>
+                <input :type="showPassword ? 'text' : 'password'"
+                       x-model="loginPassword"
+                       required
+                       class="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-10 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition font-mono">
+                <button type="button"
+                        @click="showPassword = !showPassword; refreshLucideIcons()"
+                        class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300">
+                  <i :data-lucide="showPassword ? 'eye-off' : 'eye'" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-400">
+                <input type="checkbox" x-model="rememberMe" class="rounded bg-slate-950 border-slate-800 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5">
+                <span>Manter conectado neste terminal</span>
+              </label>
+            </div>
+
+            <button type="submit"
+                    :disabled="isAuthenticating"
+                    class="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-bold rounded-lg text-xs shadow-lg shadow-emerald-950/50 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+              <i data-lucide="loader" x-show="isAuthenticating" class="w-4 h-4 animate-spin"></i>
+              <i data-lucide="log-in" x-show="!isAuthenticating" class="w-4 h-4"></i>
+              <span x-text="isAuthenticating ? 'Carregando Módulos...' : 'Entrar no SAT ERP'"></span>
+            </button>
+          </form>
+
+          <p class="text-[11px] text-center text-slate-500 mt-5">
+            Cluster SEFAZ SP Homologado • TLS 1.3 End-to-End
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 2. PAINEL PRINCIPAL DO ERP LOGADO (MULTI-TENANT COMPLETO)      -->
+  <!-- ============================================================== -->
+  <div x-show="isAuthenticated"
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       class="flex h-screen w-screen overflow-hidden bg-slate-100 text-slate-800">
+
+    <!-- ============================================================== -->
+    <!-- SIDEBAR DINÂMICA RETRÁTIL COM CONTROLE DE MÓDULOS              -->
+    <!-- ============================================================== -->
+    <aside class="bg-slate-900 text-slate-300 flex flex-col transition-all duration-200 z-30 shrink-0 border-r border-slate-800 shadow-xl"
+           :class="sidebarCollapsed ? 'w-16' : 'w-64'">
+
+      <!-- Logo Header -->
+      <div class="h-14 flex items-center justify-between px-3 border-b border-slate-800 bg-slate-950/80">
+        <div class="flex items-center gap-2.5 overflow-hidden">
+          <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white shrink-0 font-bold shadow-md shadow-emerald-950">
+            <i data-lucide="layers" class="w-4 h-4"></i>
+          </div>
+          <div x-show="!sidebarCollapsed" class="whitespace-nowrap transition-opacity duration-200">
+            <div class="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
+              <span>SAT</span>
+              <span class="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1 py-0.2 rounded font-semibold uppercase">ERP</span>
+            </div>
+            <div class="text-[10px] text-slate-400 font-mono" x-text="'Tenant: ' + currentTenant.code"></div>
+          </div>
+        </div>
+
+        <button @click="sidebarCollapsed = !sidebarCollapsed; refreshLucideIcons()"
+                class="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                :title="sidebarCollapsed ? 'Expandir Menu' : 'Recolher Menu'">
+          <i data-lucide="chevrons-left" class="w-4 h-4 transition-transform duration-200" :class="sidebarCollapsed && 'rotate-180'"></i>
+        </button>
+      </div>
+
+      <!-- Botão Rápido Frente de Caixa (Se módulo PDV ativo) -->
+      <div class="p-2 border-b border-slate-800" x-show="isModuleLicensed('pdv')">
+        <button @click="changeView('pdv')"
+                :class="currentView === 'pdv' ? 'ring-2 ring-emerald-400 ring-offset-2 ring-offset-slate-900 bg-emerald-500' : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500'"
+                class="w-full flex items-center justify-center gap-2 py-2.5 text-white rounded-md font-semibold text-xs shadow-md transition-all active:scale-[0.98]">
+          <i data-lucide="scan-barcode" class="w-4 h-4 shrink-0 text-emerald-100"></i>
+          <span x-show="!sidebarCollapsed" class="whitespace-nowrap font-bold tracking-wide">FRENTE DE CAIXA (F2)</span>
+        </button>
+      </div>
+
+      <!-- Links de Navegação Filtrados por Função e Licença -->
+      <nav class="flex-1 overflow-y-auto py-2 px-2 space-y-1">
+
+        <!-- SEÇÃO SUPER ADMIN MASTER -->
+        <template x-if="currentUserRole === 'super_admin'">
+          <div>
+            <div class="pt-1 pb-1" x-show="!sidebarCollapsed">
+              <p class="px-2.5 text-[9px] font-extrabold text-purple-400 uppercase tracking-widest flex items-center gap-1">
+                <i data-lucide="shield-alert" class="w-3 h-3 text-purple-400"></i>
+                Gestão SaaS Master
+              </p>
+            </div>
+
+            <!-- Tenants & Clientes -->
+            <button @click="changeView('super_tenants')"
+                    :class="currentView === 'super_tenants' ? 'bg-slate-800 text-purple-300 font-medium border-l-2 border-purple-400' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+                    class="w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition group">
+              <div class="flex items-center gap-3 truncate">
+                <i data-lucide="building" class="w-4 h-4 shrink-0 group-hover:text-purple-400 transition-colors"></i>
+                <span x-show="!sidebarCollapsed" class="truncate font-semibold">Tenants & Empresas</span>
+              </div>
+              <span x-show="!sidebarCollapsed" class="text-[10px] bg-purple-400/20 text-purple-300 font-mono px-1.5 py-0.5 rounded" x-text="tenantsList.length"></span>
+            </button>
+
+            <!-- Matriz de Licenciamento de Módulos -->
+            <button @click="changeView('super_modules')"
+                    :class="currentView === 'super_modules' ? 'bg-slate-800 text-purple-300 font-medium border-l-2 border-purple-400' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+                    class="w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-xs transition group text-left">
+              <i data-lucide="toggle-right" class="w-4 h-4 shrink-0 group-hover:text-purple-400 transition-colors"></i>
+              <span x-show="!sidebarCollapsed" class="truncate font-semibold">Licenciamento Módulos</span>
+            </button>
+            <div class="my-2 border-t border-slate-800"></div>
+          </div>
+        </template>
+
+        <!-- SEÇÃO GESTÃO COMERCIAL -->
+        <div class="pt-1 pb-1" x-show="!sidebarCollapsed && currentUserRole !== 'cashier'">
+          <p class="px-2.5 text-[9px] font-bold text-slate-500 uppercase tracking-wider">Gestão Comercial</p>
+        </div>
+
+        <!-- Dashboard Geral -->
+        <button x-show="currentUserRole !== 'cashier'"
+                @click="changeView('dashboard')"
+                :class="currentView === 'dashboard' ? 'bg-slate-800 text-white font-medium border-l-2 border-emerald-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+                class="w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-xs transition text-left group">
+          <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0 group-hover:text-emerald-400 transition-colors"></i>
+          <span x-show="!sidebarCollapsed" class="truncate">Painel Geral</span>
+        </button>
+
+        <!-- Catálogo de Produtos -->
+        <button @click="changeView('products')"
+                :class="currentView === 'products' ? 'bg-slate-800 text-white font-medium border-l-2 border-emerald-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+                class="w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition group">
+          <div class="flex items-center gap-3 truncate">
+            <i data-lucide="package" class="w-4 h-4 shrink-0 group-hover:text-emerald-400 transition-colors"></i>
+            <span x-show="!sidebarCollapsed" class="truncate">Produtos & Estoque</span>
+          </div>
+          <span x-show="!sidebarCollapsed" class="text-[10px] text-slate-500 font-mono" x-text="productsList.length"></span>
+        </button>
+
+        <!-- Conferência de Entrada & Lotes WMS -->
+        <button x-show="currentUserRole !== 'cashier'"
+                @click="changeView('batches')"
+                :class="currentView === 'batches' ? 'bg-slate-800 text-white font-medium border-l-2 border-emerald-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+                class="w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition group">
+          <div class="flex items-center gap-3 truncate">
+            <i data-lucide="boxes" class="w-4 h-4 shrink-0 group-hover:text-emerald-400 transition-colors"></i>
+            <span x-show="!sidebarCollapsed" class="truncate">Conferência & Lotes</span>
+          </div>
+          <span x-show="!sidebarCollapsed" class="text-[9px] bg-slate-800 text-emerald-400 font-mono px-1 py-0.2 rounded" x-text="batchesList.length"></span>
+        </button>
+
+        <!-- Clientes & Crediário / Fiado -->
+        <button x-show="isModuleLicensed('clients') && currentUserRole !== 'cashier'"
+                @click="changeView('clients')"
+                :class="currentView === 'clients' ? 'bg-slate-800 text-white font-medium border-l-2 border-emerald-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+                class="w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition group">
+          <div class="flex items-center gap-3 truncate">
+            <i data-lucide="users" class="w-4 h-4 shrink-0 group-hover:text-emerald-400 transition-colors"></i>
+            <span x-show="!sidebarCollapsed" class="truncate">Clientes & Crediário</span>
+          </div>
+          <span x-show="!sidebarCollapsed" class="text-[10px] text-slate-500 font-mono" x-text="clientsList.length"></span>
+        </button>
+
+        <!-- Monitor Fiscal SEFAZ -->
+        <button x-show="isModuleLicensed('fiscal') && currentUserRole !== 'cashier'"
+                @click="changeView('fiscal')"
+                :class="currentView === 'fiscal' ? 'bg-slate-800 text-white font-medium border-l-2 border-emerald-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+                class="w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition group">
+          <div class="flex items-center gap-3 truncate">
+            <i data-lucide="file-check-2" class="w-4 h-4 shrink-0 group-hover:text-emerald-400 transition-colors"></i>
+            <span x-show="!sidebarCollapsed" class="truncate">Monitor SEFAZ</span>
+          </div>
+          <span x-show="!sidebarCollapsed" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        </button>
+
+        <!-- SEÇÃO SMART TEF & HARDWARE -->
+        <template x-if="currentUserRole !== 'cashier'">
+          <div>
+            <div class="pt-3 pb-1" x-show="!sidebarCollapsed">
+              <p class="px-2.5 text-[9px] font-bold text-slate-500 uppercase tracking-wider">TEF & Periféricos</p>
+            </div>
+
+            <!-- Smart TEF (SmartPOS API) -->
+            <button x-show="isModuleLicensed('smart_tef')"
+                    @click="changeView('smart_tef_config')"
+                    :class="currentView === 'smart_tef_config' ? 'bg-slate-800 text-teal-300 font-medium border-l-2 border-teal-400' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+                    class="w-full flex items-center justify-between px-2.5 py-2 rounded-md text-xs transition group">
+              <div class="flex items-center gap-3 truncate">
+                <i data-lucide="smartphone" class="w-4 h-4 shrink-0 text-teal-400"></i>
+                <span x-show="!sidebarCollapsed" class="truncate font-semibold">Smart TEF (SmartPOS)</span>
+              </div>
+              <span x-show="!sidebarCollapsed" class="text-[9px] bg-teal-500/20 text-teal-300 font-mono px-1 py-0.2 rounded border border-teal-500/30">API</span>
+            </button>
+
+            <!-- Hardware Local & Certificado A1 -->
+            <button @click="changeView('hardware')"
+                    :class="currentView === 'hardware' ? 'bg-slate-800 text-white font-medium border-l-2 border-emerald-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'"
+                    class="w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-xs transition text-left group">
+              <i data-lucide="sliders-horizontal" class="w-4 h-4 shrink-0 group-hover:text-emerald-400 transition-colors"></i>
+              <span x-show="!sidebarCollapsed" class="truncate">Hardware & Certificado A1</span>
+            </button>
+          </div>
+        </template>
+      </nav>
+
+      <!-- Sidebar Rodapé: Usuário e Tenant Ativos -->
+      <div class="p-2.5 border-t border-slate-800 bg-slate-950/70 text-slate-400 text-xs">
+        <div class="flex items-center gap-2" :class="sidebarCollapsed ? 'justify-center' : ''">
+          <div class="w-7 h-7 rounded bg-emerald-950 border border-emerald-700/50 flex items-center justify-center shrink-0 text-emerald-400 font-mono text-[10px] font-bold"
+               x-text="currentTenant.code">
+          </div>
+          <div x-show="!sidebarCollapsed" class="overflow-hidden leading-tight flex-1">
+            <p class="font-bold text-slate-200 truncate text-[11px]" x-text="currentTenant.tradeName"></p>
+            <div class="flex items-center gap-1 mt-0.5">
+              <span class="text-[9px] px-1 py-0.2 rounded font-mono font-semibold"
+                    :class="{
+                      'bg-purple-900/60 text-purple-300 border border-purple-700/50': currentUserRole === 'super_admin',
+                      'bg-blue-900/60 text-blue-300 border border-blue-700/50': currentUserRole === 'store_admin',
+                      'bg-emerald-900/60 text-emerald-300 border border-emerald-700/50': currentUserRole === 'cashier'
+                    }"
+                    x-text="currentUserRoleLabel">
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============================================================== -->
+    <!-- TOPBAR FIXA COM MONITORAMENTO SEFAZ, SMART TEF & LOGOUT        -->
+    <!-- ============================================================== -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-100">
+
+      <header class="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-20 shrink-0">
+
+        <!-- Esquerda: Seletor de Tenant Master & Barra de Busca -->
+        <div class="flex items-center gap-3 flex-1 max-w-xl">
+          <!-- Tenant Switcher Exclusivo Super Admin -->
+          <div class="relative" x-show="currentUserRole === 'super_admin'">
+            <select x-model="selectedTenantId"
+                    @change="switchActiveTenant($event.target.value)"
+                    class="bg-purple-50 border border-purple-300 text-purple-950 font-bold text-xs rounded-md pl-2 pr-7 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-500 cursor-pointer shadow-2xs">
+              <template x-for="t in tenantsList" :key="t.id">
+                <option :value="t.id" x-text="'Tenant: ' + t.tradeName + ' (' + t.code + ')'"></option>
+              </template>
+            </select>
+          </div>
+
+          <div class="relative w-full">
+            <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+              <i data-lucide="search" class="w-3.5 h-3.5"></i>
+            </div>
+            <input type="text"
+                   x-ref="globalSearchInput"
+                   placeholder="Busca rápida (Ctrl + K) em produtos, EAN, cupons..."
+                   class="w-full pl-8 pr-14 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500 transition shadow-xs">
+            <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+              <kbd class="text-[9px] font-mono bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded border border-slate-300">Ctrl K</kbd>
+            </div>
+          </div>
+        </div>
+
+        <!-- Direita: Status Smart TEF, SEFAZ, Usuário & Logout -->
+        <div class="flex items-center gap-2.5 shrink-0">
+
+          <!-- Smart TEF Status Badge -->
+          <template x-if="isModuleLicensed('smart_tef')">
+            <div class="hidden md:flex items-center gap-1.5 bg-teal-50 border border-teal-200 text-teal-800 px-2 py-1 rounded text-[11px] font-medium"
+                 :title="'SmartPOS API: ' + currentTenant.smartTef.apiBaseUrl">
+              <i data-lucide="smartphone" class="w-3.5 h-3.5 text-teal-600"></i>
+              <span class="font-mono font-bold text-[10px]" x-text="'SMART TEF: ' + currentTenant.smartTef.tid"></span>
+              <span class="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
+            </div>
+          </template>
+
+          <!-- SEFAZ Status Badge -->
+          <button @click="showToastMessage('SEFAZ SP: Autorizador Ativo (34ms)', 'info')"
+                  class="hidden sm:flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-2 py-1 rounded text-[11px] font-medium hover:bg-emerald-100 transition">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span class="font-mono font-semibold">SEFAZ ONLINE</span>
+          </button>
+
+          <div class="h-5 w-px bg-slate-200"></div>
+
+          <!-- Usuário Logado -->
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs"
+                 x-text="currentUserInitials">
+            </div>
+            <div class="hidden lg:block text-left leading-tight">
+              <p class="text-xs font-bold text-slate-800 truncate" x-text="currentUserName"></p>
+              <p class="text-[10px] text-slate-500" x-text="currentUserRoleLabel"></p>
+            </div>
+          </div>
+
+          <!-- BOTÃO DE LOGOUT / SAIR -->
+          <button @click="executeLogout()"
+                  class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-md transition shadow-2xs"
+                  title="Encerrar Sessão">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">Sair</span>
+          </button>
+
+          <!-- Fullscreen -->
+          <button @click="toggleAppFullscreen()"
+                  class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-md transition"
+                  title="Tela Cheia">
+            <i data-lucide="maximize" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- ============================================================== -->
+      <!-- ÁREA DE CONTEÚDO COM BLOQUEIO DE MÓDULO REVOGADO               -->
+      <!-- ============================================================== -->
+      <main class="flex-1 overflow-y-auto p-3 sm:p-4 bg-slate-100/90 relative">
+
+        <!-- BLOQUEIO DINÂMICO SE O MÓDULO ESTIVER DESATIVADO NO TENANT -->
+        <template x-if="isViewAccessBlocked()">
+          <div class="h-full flex flex-col items-center justify-center p-8 text-center bg-white rounded-xl border border-slate-200 shadow-sm">
+            <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4 border border-amber-200">
+              <i data-lucide="lock" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-base font-bold text-slate-900">Módulo Não Licenciado</h2>
+            <p class="text-xs text-slate-500 max-w-md mt-1 mb-4">
+              O recurso <strong class="text-slate-800 font-mono" x-text="currentView.toUpperCase()"></strong> está desabilitado na assinatura de <strong class="text-slate-800" x-text="currentTenant.tradeName"></strong>.
+            </p>
+            <div class="flex items-center gap-2">
+              <button @click="changeView('dashboard')" class="px-3 py-1.5 bg-slate-900 text-white rounded-md text-xs font-semibold hover:bg-slate-800 transition">
+                Voltar ao Painel
+              </button>
+              <button x-show="currentUserRole === 'super_admin'" @click="changeView('super_modules')" class="px-3 py-1.5 bg-purple-600 text-white rounded-md text-xs font-semibold hover:bg-purple-700 transition">
+                Liberar no SaaS Master &rarr;
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: TENANTS (SUPER ADMIN)                                  -->
+        <!-- ============================================================ -->
+        <div x-show="currentView === 'super_tenants' && currentUserRole === 'super_admin'" x-transition class="space-y-4">
+          <div class="bg-gradient-to-r from-purple-950 via-slate-900 to-slate-900 text-white p-4 rounded-xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="bg-purple-500 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase">Master Console</span>
+                <h1 class="text-base font-bold tracking-tight">Gestão Multi-Empresa & Tenants</h1>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">Isolamento de banco, controle de assinaturas e alternância instantânea.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click="changeView('super_modules')" class="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-xs transition">
+                <i data-lucide="toggle-right" class="w-3.5 h-3.5"></i>
+                <span>Matriz de Licenciamento de Módulos</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                  <th class="py-2.5 px-3">Cód.</th>
+                  <th class="py-2.5 px-4">Razão Social / Nome Comercial</th>
+                  <th class="py-2.5 px-3">CNPJ</th>
+                  <th class="py-2.5 px-3">Plano</th>
+                  <th class="py-2.5 px-3">Smart TEF</th>
+                  <th class="py-2.5 px-3">PDV</th>
+                  <th class="py-2.5 px-3 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <template x-for="tenant in tenantsList" :key="tenant.id">
+                  <tr class="hover:bg-slate-50 transition" :class="selectedTenantId === tenant.id ? 'bg-purple-50/40' : ''">
+                    <td class="py-2.5 px-3 font-mono font-bold text-slate-600" x-text="tenant.code"></td>
+                    <td class="py-2.5 px-4 font-bold text-slate-900">
+                      <span x-text="tenant.tradeName"></span>
+                      <span x-show="selectedTenantId === tenant.id" class="ml-1 text-[9px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.2 rounded border border-purple-200">ATIVO</span>
+                    </td>
+                    <td class="py-2.5 px-3 font-mono text-slate-600" x-text="tenant.cnpj"></td>
+                    <td class="py-2.5 px-3">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
+                            :class="tenant.plan === 'Enterprise PRO' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+                            x-text="tenant.plan">
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-3">
+                      <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold"
+                            :class="tenant.modules.smart_tef ? 'bg-teal-50 text-teal-700 border border-teal-200' : 'bg-slate-100 text-slate-400'">
+                        <i data-lucide="smartphone" class="w-3 h-3"></i>
+                        <span x-text="tenant.modules.smart_tef ? 'Ativo' : 'Inativo'"></span>
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-3">
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-bold"
+                            :class="tenant.modules.pdv ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-400'"
+                            x-text="tenant.modules.pdv ? 'Sim' : 'Não'">
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-3 text-center">
+                      <button @click="switchActiveTenant(tenant.id)"
+                              class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded text-[11px] font-semibold transition"
+                              :disabled="selectedTenantId === tenant.id">
+                        Assumir Empresa
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: MATRIZ DE MÓDULOS (SUPER ADMIN)                        -->
+        <!-- ============================================================ -->
+        <div x-show="currentView === 'super_modules' && currentUserRole === 'super_admin'" x-transition class="space-y-4">
+          <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="bg-purple-100 text-purple-800 font-bold text-[10px] px-2 py-0.5 rounded">SaaS Master</span>
+                <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Matriz de Licenciamento de Módulos</h2>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Ative ou revogue permissões. Os módulos ocultam e bloqueiam imediatamente na empresa.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-600 font-medium">Tenant em Edição:</span>
+              <span class="font-mono font-bold text-xs bg-purple-100 text-purple-900 px-2.5 py-1 rounded border border-purple-200" x-text="currentTenant.tradeName"></span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <!-- PDV -->
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                      <i data-lucide="scan-barcode" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-bold text-slate-800">Frente de Caixa (PDV)</h3>
+                      <p class="text-[10px] text-slate-400 font-mono">ID: pdv</p>
+                    </div>
+                  </div>
+                  <button @click="toggleModuleLicense('pdv')"
+                          class="relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+                          :class="currentTenant.modules.pdv ? 'bg-emerald-600' : 'bg-slate-300'">
+                    <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200"
+                          :class="currentTenant.modules.pdv ? 'translate-x-5' : 'translate-x-0'"></span>
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-600">Bipagem com código de barras, bobina de cupom térmico e finalização rápida.</p>
+              </div>
+              <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                <span>Licença:</span>
+                <span :class="currentTenant.modules.pdv ? 'text-emerald-700 font-bold' : 'text-slate-400'" x-text="currentTenant.modules.pdv ? 'HABILITADO' : 'REVOGADO'"></span>
+              </div>
+            </div>
+
+            <!-- Smart TEF (SmartPOS API) -->
+            <div class="bg-white p-4 rounded-lg border border-teal-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded bg-teal-100 text-teal-700 flex items-center justify-center font-bold">
+                      <i data-lucide="smartphone" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-bold text-slate-800">Smart TEF (SmartPOS Cloud)</h3>
+                      <p class="text-[10px] text-teal-600 font-mono">ID: smart_tef</p>
+                    </div>
+                  </div>
+                  <button @click="toggleModuleLicense('smart_tef')"
+                          class="relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+                          :class="currentTenant.modules.smart_tef ? 'bg-teal-600' : 'bg-slate-300'">
+                    <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200"
+                          :class="currentTenant.modules.smart_tef ? 'translate-x-5' : 'translate-x-0'"></span>
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-600">Integração com máquinas SmartPOS Android via API Cloud (sem cabo ou PinPad).</p>
+              </div>
+              <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                <span>Licença:</span>
+                <span :class="currentTenant.modules.smart_tef ? 'text-teal-700 font-bold' : 'text-slate-400'" x-text="currentTenant.modules.smart_tef ? 'HABILITADO' : 'REVOGADO'"></span>
+              </div>
+            </div>
+
+            <!-- PinPad USB -->
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                      <i data-lucide="credit-card" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-bold text-slate-800">PinPad USB (SiTef / PayGo)</h3>
+                      <p class="text-[10px] text-slate-400 font-mono">ID: tef_pinpad</p>
+                    </div>
+                  </div>
+                  <button @click="toggleModuleLicense('tef_pinpad')"
+                          class="relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+                          :class="currentTenant.modules.tef_pinpad ? 'bg-blue-600' : 'bg-slate-300'">
+                    <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200"
+                          :class="currentTenant.modules.tef_pinpad ? 'translate-x-5' : 'translate-x-0'"></span>
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-600">Comunicação serial com PinPad físico conectado via USB no balcão.</p>
+              </div>
+              <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                <span>Licença:</span>
+                <span :class="currentTenant.modules.tef_pinpad ? 'text-blue-700 font-bold' : 'text-slate-400'" x-text="currentTenant.modules.tef_pinpad ? 'HABILITADO' : 'REVOGADO'"></span>
+              </div>
+            </div>
+
+            <!-- Fiscal SEFAZ -->
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                      <i data-lucide="file-check-2" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-bold text-slate-800">Monitor Fiscal SEFAZ</h3>
+                      <p class="text-[10px] text-slate-400 font-mono">ID: fiscal</p>
+                    </div>
+                  </div>
+                  <button @click="toggleModuleLicense('fiscal')"
+                          class="relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+                          :class="currentTenant.modules.fiscal ? 'bg-purple-600' : 'bg-slate-300'">
+                    <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200"
+                          :class="currentTenant.modules.fiscal ? 'translate-x-5' : 'translate-x-0'"></span>
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-600">Emissão e transmissão NFC-e Mod 65 e NF-e Mod 55 com Certificado A1.</p>
+              </div>
+              <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                <span>Licença:</span>
+                <span :class="currentTenant.modules.fiscal ? 'text-purple-700 font-bold' : 'text-slate-400'" x-text="currentTenant.modules.fiscal ? 'HABILITADO' : 'REVOGADO'"></span>
+              </div>
+            </div>
+
+            <!-- Clientes & Crediário -->
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                      <i data-lucide="users" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-bold text-slate-800">Clientes & Fiado / Crediário</h3>
+                      <p class="text-[10px] text-slate-400 font-mono">ID: clients</p>
+                    </div>
+                  </div>
+                  <button @click="toggleModuleLicense('clients')"
+                          class="relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+                          :class="currentTenant.modules.clients ? 'bg-indigo-600' : 'bg-slate-300'">
+                    <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200"
+                          :class="currentTenant.modules.clients ? 'translate-x-5' : 'translate-x-0'"></span>
+                  </button>
+                </div>
+                <p class="text-[11px] text-slate-600">Controle de limite de crédito, saldo devedor e extrato de compras.</p>
+              </div>
+              <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                <span>Licença:</span>
+                <span :class="currentTenant.modules.clients ? 'text-indigo-700 font-bold' : 'text-slate-400'" x-text="currentTenant.modules.clients ? 'HABILITADO' : 'REVOGADO'"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: DASHBOARD GERAL                                        -->
+        <!-- ============================================================ -->
+        <div x-show="currentView === 'dashboard' && !isViewAccessBlocked()" x-transition class="space-y-4">
+          <div class="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="text-base font-bold text-slate-900 tracking-tight" x-text="currentTenant.tradeName"></h1>
+                <span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase" x-text="'Plano ' + currentTenant.plan"></span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Visão consolidada do fluxo comercial, conferência de lotes e vendas do dia.</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button x-show="isModuleLicensed('pdv')"
+                      @click="changeView('pdv')"
+                      class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-xs transition">
+                <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i>
+                <span>Abrir Frente de Caixa (F2)</span>
+              </button>
+              <button x-show="currentUserRole !== 'cashier'"
+                      @click="openNewProductModal()"
+                      class="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-xs transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Novo Produto com Abas (F3)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Cards de Indicadores -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs">
+              <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+                <span>Vendas Hoje</span>
+                <span class="p-1.5 bg-emerald-50 text-emerald-600 rounded"><i data-lucide="badge-dollar-sign" class="w-4 h-4"></i></span>
+              </div>
+              <div class="text-2xl font-bold font-mono text-slate-900" x-text="formatCurrency(calculateTodayTotal())"></div>
+              <div class="flex items-center gap-1 text-[11px] text-emerald-600 font-medium mt-1">
+                <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
+                <span>+14.2% comparado a ontem</span>
+              </div>
+            </div>
+
+            <div class="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs">
+              <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+                <span>Lotes em Quarentena</span>
+                <span class="p-1.5 bg-amber-50 text-amber-600 rounded"><i data-lucide="boxes" class="w-4 h-4"></i></span>
+              </div>
+              <div class="text-2xl font-bold font-mono text-amber-600" x-text="batchesList.filter(b => b.quality === 'Quarentena').length + ' lotes'"></div>
+              <button @click="changeView('batches')" class="text-[11px] text-amber-700 font-semibold hover:underline mt-1 block">
+                Ver conferências pendentes &rarr;
+              </button>
+            </div>
+
+            <div class="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs">
+              <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+                <span>Estoque Crítico / Baixo</span>
+                <span class="p-1.5 bg-rose-50 text-rose-600 rounded"><i data-lucide="alert-triangle" class="w-4 h-4"></i></span>
+              </div>
+              <div class="text-2xl font-bold font-mono text-rose-600" x-text="productsList.filter(p => p.stock <= p.stockMin).length + ' itens'"></div>
+              <button @click="changeView('products'); productFilter = 'critical'" class="text-[11px] text-rose-700 font-semibold hover:underline mt-1 block">
+                Filtrar estoque crítico &rarr;
+              </button>
+            </div>
+
+            <div class="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs">
+              <div class="flex items-center justify-between text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">
+                <span>Smart TEF API Status</span>
+                <span class="p-1.5 bg-teal-50 text-teal-600 rounded"><i data-lucide="smartphone" class="w-4 h-4"></i></span>
+              </div>
+              <div class="text-2xl font-bold font-mono text-teal-600">Sincronizado</div>
+              <p class="text-[11px] text-slate-500 mt-1" x-text="'TID: ' + currentTenant.smartTef.tid + ' (Online)'"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: CATÁLOGO DE PRODUTOS & ESTOQUE COM ABAS                -->
+        <!-- ============================================================ -->
+        <div x-show="currentView === 'products' && !isViewAccessBlocked()" x-transition class="space-y-3">
+          <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center gap-2 flex-1 flex-wrap">
+              <div class="relative w-full sm:w-80">
+                <input type="text"
+                       x-model="productSearchTerm"
+                       placeholder="Buscar por código, EAN ou descrição..."
+                       class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:ring-1 focus:ring-emerald-500 focus:bg-white transition">
+                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                  <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                </div>
+              </div>
+
+              <!-- Filtros de Status -->
+              <div class="flex items-center gap-1 bg-slate-100 p-0.5 rounded-md border border-slate-200 text-xs">
+                <button @click="productFilter = 'all'" :class="productFilter === 'all' ? 'bg-white shadow-2xs font-bold text-slate-900' : 'text-slate-600'" class="px-2.5 py-1 rounded transition text-[11px]">
+                  Todos (<span x-text="productsList.length"></span>)
+                </button>
+                <button @click="productFilter = 'critical'" :class="productFilter === 'critical' ? 'bg-white shadow-2xs font-bold text-amber-700' : 'text-slate-600'" class="px-2.5 py-1 rounded transition text-[11px]">
+                  Crítico (<span x-text="productsList.filter(p => p.stock <= p.stockMin && p.stock > 0).length"></span>)
+                </button>
+                <button @click="productFilter = 'zero'" :class="productFilter === 'zero' ? 'bg-white shadow-2xs font-bold text-rose-700' : 'text-slate-600'" class="px-2.5 py-1 rounded transition text-[11px]">
+                  Zerados (<span x-text="productsList.filter(p => p.stock <= 0).length"></span>)
+                </button>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2 shrink-0" x-show="currentUserRole !== 'cashier'">
+              <button @click="openNewProductModal()"
+                      class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-xs transition">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Novo Produto com Abas (F3)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabela com Status Operacional do Estoque -->
+          <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                    <th class="py-2.5 px-3">Cód.</th>
+                    <th class="py-2.5 px-3">EAN-13</th>
+                    <th class="py-2.5 px-4">Descrição do Produto</th>
+                    <th class="py-2.5 px-2 text-center">UN</th>
+                    <th class="py-2.5 px-3 text-right">Preço Venda</th>
+                    <th class="py-2.5 px-3 text-right">Saldo Estoque</th>
+                    <th class="py-2.5 px-3 text-center">Status Operacional</th>
+                    <th class="py-2.5 px-3 text-center">NCM</th>
+                    <th class="py-2.5 px-3 text-center" x-show="currentUserRole !== 'cashier'">Ações</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <template x-for="item in filteredProductsList" :key="item.id">
+                    <tr class="hover:bg-slate-50 transition-colors">
+                      <td class="py-2 px-3 font-mono font-semibold text-slate-500" x-text="item.id"></td>
+                      <td class="py-2 px-3 font-mono text-slate-600" x-text="item.ean"></td>
+                      <td class="py-2 px-4 font-medium text-slate-800">
+                        <div class="flex items-center gap-2">
+                          <img :src="item.image || 'https://placehold.co/40x40/f1f5f9/475569?text=IMG'"
+                               class="w-6 h-6 rounded object-cover border border-slate-200 shrink-0"
+                               onerror="this.src='https://placehold.co/40x40/f1f5f9/475569?text=IMG'">
+                          <div>
+                            <span x-text="item.name"></span>
+                            <template x-if="item.weight">
+                              <span class="text-[10px] text-slate-400 block" x-text="'Peso: ' + item.weight + 'kg • Loc: ' + (item.shelf || 'Geral')"></span>
+                            </template>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="py-2 px-2 text-center font-mono font-semibold" x-text="item.unit"></td>
+                      <td class="py-2 px-3 text-right font-mono font-bold text-slate-900" x-text="formatCurrency(item.priceSale)"></td>
+
+                      <!-- Saldo -->
+                      <td class="py-2 px-3 text-right font-mono font-bold"
+                          :class="{
+                            'text-rose-600': item.stock <= 0,
+                            'text-amber-600': item.stock > 0 && item.stock <= item.stockMin,
+                            'text-slate-800': item.stock > item.stockMin
+                          }"
+                          x-text="item.stock.toFixed(2)">
+                      </td>
+
+                      <!-- Status Operacional Dinâmico -->
+                      <td class="py-2 px-3 text-center">
+                        <select x-model="item.stockStatus"
+                                :disabled="currentUserRole === 'cashier'"
+                                class="text-[10px] font-bold rounded px-1.5 py-0.5 border cursor-pointer focus:outline-none"
+                                :class="{
+                                  'bg-emerald-50 text-emerald-800 border-emerald-300': item.stockStatus === 'Ativo',
+                                  'bg-amber-50 text-amber-800 border-amber-300': item.stockStatus === 'Conferência',
+                                  'bg-rose-50 text-rose-800 border-rose-300': item.stockStatus === 'Bloqueado',
+                                  'bg-slate-100 text-slate-600 border-slate-300': item.stockStatus === 'Inativo'
+                                }">
+                          <option value="Ativo">Ativo / Venda</option>
+                          <option value="Conferência">Em Conferência</option>
+                          <option value="Bloqueado">Bloqueado</option>
+                          <option value="Inativo">Inativo</option>
+                        </select>
+                      </td>
+
+                      <td class="py-2 px-3 text-center font-mono text-[11px] text-slate-500" x-text="item.ncm"></td>
+
+                      <td class="py-2 px-3 text-center" x-show="currentUserRole !== 'cashier'">
+                        <button @click="editExistingProduct(item)" class="p-1 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded transition" title="Editar Ficha Cadastral">
+                          <i data-lucide="edit" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: CONFERÊNCIA DE ENTRADA & LOTES DE ESTOQUE              -->
+        <!-- ============================================================ -->
+        <div x-show="currentView === 'batches' && !isViewAccessBlocked()" x-transition class="space-y-3">
+          <div class="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded">Rastreabilidade WMS</span>
+                <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Conferência de Entrada & Gestão de Lotes</h2>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Valide a entrada física de mercadorias, inspecione a qualidade e alimente o estoque rastreável.</p>
+            </div>
+
+            <button @click="openNewBatchModal()" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold shadow-xs transition">
+              <i data-lucide="clipboard-check" class="w-3.5 h-3.5"></i>
+              <span>Nova Conferência de Lote</span>
+            </button>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                    <th class="py-2.5 px-3">Lote / Registro</th>
+                    <th class="py-2.5 px-4">Produto Vinculado</th>
+                    <th class="py-2.5 px-3">Fabricação</th>
+                    <th class="py-2.5 px-3">Validade</th>
+                    <th class="py-2.5 px-3 text-right">Qtd. Conferida</th>
+                    <th class="py-2.5 px-3 text-center">Laudo / Qualidade</th>
+                    <th class="py-2.5 px-3">Inspetor</th>
+                    <th class="py-2.5 px-3 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <template x-for="batch in batchesList" :key="batch.id">
+                    <tr class="hover:bg-slate-50 transition-colors">
+                      <td class="py-2 px-3 font-mono font-bold text-slate-800" x-text="batch.code"></td>
+                      <td class="py-2 px-4 font-semibold text-slate-800" x-text="batch.productName"></td>
+                      <td class="py-2 px-3 font-mono text-slate-600" x-text="batch.mfgDate"></td>
+                      <td class="py-2 px-3 font-mono font-bold text-slate-800" x-text="batch.expDate"></td>
+                      <td class="py-2 px-3 text-right font-mono font-bold text-slate-900" x-text="batch.qty + ' UN'"></td>
+
+                      <!-- Laudo / Qualidade -->
+                      <td class="py-2 px-3 text-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold"
+                              :class="{
+                                'bg-emerald-50 text-emerald-800 border border-emerald-300': batch.quality === 'Aprovado',
+                                'bg-amber-50 text-amber-800 border border-amber-300': batch.quality === 'Quarentena',
+                                'bg-rose-50 text-rose-800 border border-rose-300': batch.quality === 'Avariado'
+                              }"
+                              x-text="batch.quality">
+                        </span>
+                      </td>
+
+                      <td class="py-2 px-3 text-slate-600" x-text="batch.inspector"></td>
+
+                      <td class="py-2 px-3 text-center">
+                        <button @click="showToastMessage('Etiqueta térmica de lote gerada.', 'info')" class="p-1 text-slate-500 hover:text-emerald-600 rounded" title="Imprimir Etiqueta de Lote">
+                          <i data-lucide="tag" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: FRENTE DE CAIXA (PDV DE ALTO DESEMPENHO)               -->
+        <!-- ============================================================ -->
+        <div x-show="currentView === 'pdv' && !isViewAccessBlocked()" x-transition class="h-full flex flex-col gap-3">
+
+          <!-- Barra Superior do Caixa -->
+          <div class="bg-slate-900 text-white px-4 py-2 rounded-lg flex items-center justify-between text-xs shadow-md shrink-0">
+            <div class="flex items-center gap-4">
+              <span class="font-bold text-emerald-400 tracking-wider flex items-center gap-1.5">
+                <i data-lucide="monitor" class="w-4 h-4"></i>
+                CAIXA 01: EM ATENDIMENTO
+              </span>
+              <span class="text-slate-400 font-mono hidden md:inline" x-text="'Tenant: ' + currentTenant.tradeName"></span>
+              <span class="text-slate-400 font-mono hidden lg:inline" x-text="'Operador: ' + currentUserName"></span>
+            </div>
+            <div class="flex items-center gap-2 font-mono text-[11px]">
+              <span class="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-amber-300">F2: Buscar</span>
+              <span class="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-emerald-300">F4: Pagamento</span>
+              <span class="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-rose-300">F7: Cancelar Item</span>
+              <span class="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-slate-400">ESC: Limpar</span>
+            </div>
+          </div>
+
+          <!-- Grade Principal PDV -->
+          <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0">
+
+            <!-- Entrada de Código / Busca (7 colunas) -->
+            <div class="lg:col-span-7 flex flex-col gap-3 min-h-0">
+
+              <!-- Bipagem / Entrada com Enter -->
+              <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex items-center gap-3 shrink-0">
+                <div class="w-10 h-10 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <i data-lucide="barcode" class="w-6 h-6"></i>
+                </div>
+                <div class="flex-1">
+                  <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">Leitor de Código de Barras / Digite Código ou Nome (Enter)</label>
+                  <div class="relative">
+                    <input type="text"
+                           x-ref="barcodeScannerInput"
+                           x-model="posBarcodeQuery"
+                           @keydown.enter.prevent="processBarcodeScan()"
+                           placeholder="Bipe o código EAN-13 ou pressione F2..."
+                           class="w-full font-mono text-sm font-bold bg-slate-50 border border-slate-300 rounded px-3 py-1.5 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <button @click="openQuickProductSearchModal()"
+                            class="absolute right-1 top-1 bottom-1 px-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-semibold flex items-center gap-1 transition">
+                      <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                      <span>F2</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="w-24 shrink-0">
+                  <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-0.5">Multiplicador</label>
+                  <input type="number"
+                         step="1"
+                         min="1"
+                         x-model.number="posBarcodeQty"
+                         class="w-full font-mono text-sm font-bold text-center bg-slate-50 border border-slate-300 rounded px-2 py-1.5 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+              </div>
+
+              <!-- Destaque do Último Item Bipado -->
+              <div class="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-4 rounded-lg shadow-sm shrink-0 flex items-center justify-between">
+                <div>
+                  <span class="text-[10px] uppercase font-mono tracking-widest text-emerald-400 font-bold">Último Item Bipado</span>
+                  <h2 class="text-base sm:text-lg font-bold truncate max-w-sm sm:max-w-md" x-text="lastScannedProduct ? lastScannedProduct.name : 'Aguardando bipagem de itens...'"></h2>
+                  <p class="text-xs text-slate-400 font-mono mt-0.5" x-text="lastScannedProduct ? ('EAN: ' + lastScannedProduct.ean + ' • UN: ' + lastScannedProduct.unit) : 'Utilize o leitor óptico ou F2 para busca rápida'"></p>
+                </div>
+                <div class="text-right">
+                  <span class="text-[10px] font-mono text-slate-400 uppercase">Preço Unitário</span>
+                  <div class="text-2xl font-mono font-extrabold text-emerald-400" x-text="lastScannedProduct ? formatCurrency(lastScannedProduct.priceSale) : 'R$ 0,00'"></div>
+                </div>
+              </div>
+
+              <!-- Atalhos Rápidos F2, F7, ESC -->
+              <div class="grid grid-cols-3 gap-2 shrink-0">
+                <button @click="openQuickProductSearchModal()"
+                        class="p-2.5 bg-white border border-slate-200 hover:border-emerald-500 rounded-lg flex items-center gap-2 text-left transition shadow-2xs group">
+                  <div class="w-8 h-8 rounded bg-blue-50 text-blue-600 flex items-center justify-center font-mono font-bold text-xs shrink-0 group-hover:bg-blue-600 group-hover:text-white transition">F2</div>
+                  <div class="leading-tight truncate">
+                    <p class="text-xs font-bold text-slate-800">Localizar Item</p>
+                    <p class="text-[10px] text-slate-500">Busca por descrição</p>
+                  </div>
+                </button>
+                <button @click="cancelLastPosItem()"
+                        class="p-2.5 bg-white border border-slate-200 hover:border-rose-500 rounded-lg flex items-center gap-2 text-left transition shadow-2xs group">
+                  <div class="w-8 h-8 rounded bg-rose-50 text-rose-600 flex items-center justify-center font-mono font-bold text-xs shrink-0 group-hover:bg-rose-600 group-hover:text-white transition">F7</div>
+                  <div class="leading-tight truncate">
+                    <p class="text-xs font-bold text-rose-700">Cancelar Item</p>
+                    <p class="text-[10px] text-slate-500">Remove o último</p>
+                  </div>
+                </button>
+                <button @click="clearEntireCart()"
+                        class="p-2.5 bg-white border border-slate-200 hover:border-slate-500 rounded-lg flex items-center gap-2 text-left transition shadow-2xs group">
+                  <div class="w-8 h-8 rounded bg-slate-100 text-slate-600 flex items-center justify-center font-mono font-bold text-xs shrink-0 group-hover:bg-slate-700 group-hover:text-white transition">ESC</div>
+                  <div class="leading-tight truncate">
+                    <p class="text-xs font-bold text-slate-800">Zerar Cupom</p>
+                    <p class="text-[10px] text-slate-500">Limpa venda atual</p>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Itens Rápidos de Balcão -->
+              <div class="flex-1 bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-col min-h-0">
+                <p class="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">Itens Rápidos de Balcão (Clique para adicionar)</p>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 overflow-y-auto pr-1">
+                  <template x-for="prod in productsList.slice(0, 6)" :key="prod.id">
+                    <button @click="quickAddProductToCart(prod)"
+                            class="p-2 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded text-left transition group">
+                      <p class="text-xs font-bold text-slate-800 truncate group-hover:text-emerald-700" x-text="prod.name"></p>
+                      <div class="flex items-center justify-between text-[11px] font-mono mt-1">
+                        <span class="text-slate-500" x-text="'Est: ' + prod.stock"></span>
+                        <span class="font-bold text-emerald-700" x-text="formatCurrency(prod.priceSale)"></span>
+                      </div>
+                    </button>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bobina do Cupom Fiscal e Fechamento (5 colunas) -->
+            <div class="lg:col-span-5 flex flex-col gap-3 min-h-0">
+
+              <!-- Bobina Térmica -->
+              <div class="flex-1 receipt-paper border border-slate-300 rounded-lg p-3 flex flex-col min-h-0 overflow-hidden font-mono text-xs">
+                <div class="text-center pb-2 border-b border-dashed border-slate-400 text-[11px] leading-tight shrink-0">
+                  <p class="font-bold text-slate-900" x-text="currentTenant.tradeName"></p>
+                  <p class="text-slate-600" x-text="'CNPJ: ' + currentTenant.cnpj"></p>
+                  <p class="text-[10px] text-slate-500 mt-0.5">DOCUMENTO AUXILIAR DA NFC-e (MOD 65)</p>
+                </div>
+
+                <!-- Lista de Itens Bipados -->
+                <div class="flex-1 overflow-y-auto py-2 divide-y divide-dashed divide-slate-200 pr-1" id="posReceiptItemsRoll">
+                  <template x-for="(cartItem, index) in posCartList" :key="index">
+                    <div class="py-1.5 flex items-start justify-between gap-1 text-[11px]">
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-1">
+                          <span class="text-[10px] font-bold text-slate-400" x-text="(index + 1) + '.'"></span>
+                          <span class="font-bold text-slate-800 truncate" x-text="cartItem.name"></span>
+                        </div>
+                        <div class="text-[10px] text-slate-500 flex items-center gap-2">
+                          <span x-text="cartItem.qty + ' ' + cartItem.unit + ' x ' + formatCurrency(cartItem.price)"></span>
+                        </div>
+                      </div>
+                      <div class="text-right shrink-0 flex items-center gap-2">
+                        <span class="font-bold text-slate-900" x-text="formatCurrency(cartItem.qty * cartItem.price)"></span>
+                        <button @click="removePosCartIndex(index)" class="text-rose-500 hover:text-rose-700 p-0.5" title="Remover item">
+                          <i data-lucide="trash" class="w-3 h-3"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </template>
+
+                  <div x-show="posCartList.length === 0" class="h-full flex flex-col items-center justify-center text-center text-slate-400 py-10">
+                    <i data-lucide="shopping-bag" class="w-8 h-8 mb-2 opacity-50"></i>
+                    <p class="text-xs font-sans">Caixa pronto. Bipe ou selecione produtos.</p>
+                  </div>
+                </div>
+
+                <!-- Subtotais da Bobina -->
+                <div class="border-t-2 border-dashed border-slate-400 pt-2 shrink-0 space-y-1 text-xs">
+                  <div class="flex justify-between text-slate-600">
+                    <span>QTD. TOTAL ITENS</span>
+                    <span class="font-bold" x-text="posCartList.reduce((acc, i) => acc + i.qty, 0)"></span>
+                  </div>
+                  <div class="flex justify-between text-slate-600">
+                    <span>SUBTOTAL</span>
+                    <span class="font-bold" x-text="formatCurrency(computePosCartTotal())"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Totalizador & Fechamento F4 -->
+              <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-col gap-2 shrink-0">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-600 uppercase">Total a Pagar</span>
+                  <div class="text-3xl font-mono font-black text-emerald-600" x-text="formatCurrency(computePosCartTotal())"></div>
+                </div>
+                <button @click="openPaymentModal()"
+                        :disabled="posCartList.length === 0"
+                        class="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-md flex items-center justify-center gap-2 transition active:scale-[0.99]">
+                  <i data-lucide="credit-card" class="w-5 h-5"></i>
+                  <span class="text-sm tracking-wide">PAGAMENTO / SMART TEF (F4)</span>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: CONFIGURAÇÃO SMART TEF (SMARTPOS API)                  -->
+        <!-- ============================================================ -->
+        <div x-show="currentView === 'smart_tef_config' && isModuleLicensed('smart_tef')" x-transition class="max-w-4xl mx-auto space-y-4">
+          <div class="bg-gradient-to-r from-teal-950 via-slate-900 to-slate-900 text-white p-4 rounded-xl shadow-md flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="bg-teal-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded uppercase">API Cloud</span>
+                <h1 class="text-base font-bold tracking-tight">Configuração Smart TEF (SmartPOS Cloud API)</h1>
+              </div>
+              <p class="text-xs text-slate-300 mt-1">Parametrize os tokens oficiais para conexão direta com as maquininhas Android SmartPOS.</p>
+            </div>
+            <button @click="testSmartTefApiPing()"
+                    :disabled="smartTefTesting"
+                    class="flex items-center gap-1.5 bg-teal-500 hover:bg-teal-600 text-slate-950 px-3 py-1.5 rounded-md text-xs font-bold shadow-xs transition">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5" :class="smartTefTesting && 'animate-spin'"></i>
+              <span x-text="smartTefTesting ? 'Testando Conexão...' : 'Testar Conexão Smart TEF'"></span>
+            </button>
+          </div>
+
+          <div class="bg-white p-5 rounded-lg border border-slate-200 shadow-xs space-y-4 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Ambiente de Operação</label>
+                <select x-model="currentTenant.smartTef.environment" class="w-full border border-slate-300 rounded px-2.5 py-1.5 bg-white font-semibold">
+                  <option value="production">Produção Oficial</option>
+                  <option value="sandbox">Homologação / Sandbox</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">URL Base da API Smart TEF</label>
+                <input type="text" x-model="currentTenant.smartTef.apiBaseUrl" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono text-slate-700">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Bearer Token (API Token)</label>
+                <input type="text" x-model="currentTenant.smartTef.bearerToken" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono text-teal-800 font-semibold">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Gateway Token / Secret Key</label>
+                <input type="text" x-model="currentTenant.smartTef.gatewayToken" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono text-teal-800 font-semibold">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">ID da Loja (Merchant Store ID)</label>
+                <input type="text" x-model="currentTenant.smartTef.merchantStoreId" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono font-bold">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Terminal ID (TID / Nº Série Smart POS)</label>
+                <input type="text" x-model="currentTenant.smartTef.tid" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono font-bold text-emerald-800">
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">URL de Webhook (Retorno Assíncrono)</label>
+              <input type="text" x-model="currentTenant.smartTef.webhookUrl" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono">
+            </div>
+
+            <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+              <label class="flex items-center gap-2 cursor-pointer font-semibold text-slate-700">
+                <input type="checkbox" x-model="currentTenant.smartTef.printOnDevice" class="rounded text-teal-600 focus:ring-teal-500 w-4 h-4">
+                <span>Imprimir cupom fiscal NFC-e diretamente na impressora térmica da Smart POS</span>
+              </label>
+
+              <button @click="showToastMessage('Parâmetros Smart TEF salvos com sucesso!', 'success')" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded shadow-xs transition">
+                Salvar Credenciais
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: CLIENTES & CREDIÁRIO / FIADO                           -->
+        <!-- ============================================================ -->
+        <div x-show="currentView === 'clients' && isModuleLicensed('clients') && !isViewAccessBlocked()" x-transition class="space-y-3">
+          <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="relative w-full sm:w-80">
+              <input type="text"
+                     x-model="clientSearchQuery"
+                     placeholder="Buscar cliente por Razão, CPF ou CNPJ..."
+                     class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md text-xs focus:ring-1 focus:ring-emerald-500">
+              <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="search" class="w-3.5 h-3.5"></i>
+              </div>
+            </div>
+            <button @click="showToastMessage('Cadastro de cliente acionado.', 'info')" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold">
+              <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+              <span>Novo Cliente</span>
+            </button>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase">
+                  <th class="py-2.5 px-3">Cód.</th>
+                  <th class="py-2.5 px-4">Nome / Razão Social</th>
+                  <th class="py-2.5 px-3">CPF / CNPJ</th>
+                  <th class="py-2.5 px-3 text-right">Limite de Crédito</th>
+                  <th class="py-2.5 px-3 text-right">Saldo Devedor (Fiado)</th>
+                  <th class="py-2.5 px-3 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <template x-for="c in filteredClientsList" :key="c.id">
+                  <tr class="hover:bg-slate-50 transition">
+                    <td class="py-2 px-3 font-mono text-slate-500" x-text="c.id"></td>
+                    <td class="py-2 px-4 font-bold text-slate-800" x-text="c.name"></td>
+                    <td class="py-2 px-3 font-mono text-slate-600" x-text="c.doc"></td>
+                    <td class="py-2 px-3 text-right font-mono font-semibold" x-text="formatCurrency(c.creditLimit)"></td>
+                    <td class="py-2 px-3 text-right font-mono font-bold" :class="c.balanceDue > 0 ? 'text-rose-600' : 'text-emerald-600'" x-text="formatCurrency(c.balanceDue)"></td>
+                    <td class="py-2 px-3 text-center">
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                            :class="c.status === 'Liberado' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'"
+                            x-text="c.status">
+                      </span>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: MONITOR FISCAL SEFAZ (NFC-e / NF-e)                    -->
+        <!-- ============================================================ -->
+        <div x-show="currentView === 'fiscal' && isModuleLicensed('fiscal') && !isViewAccessBlocked()" x-transition class="space-y-3">
+          <div class="bg-white p-3.5 rounded-lg border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                <i data-lucide="shield-check" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h2 class="text-sm font-bold text-slate-900">Monitor Fiscal Integrado - SEFAZ SP</h2>
+                <p class="text-xs text-slate-500" x-text="'Certificado Digital A1 de: ' + currentTenant.tradeName"></p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button @click="showToastMessage('Consulta SEFAZ OK: Ambiente de Autorização em Produção Ativo', 'success')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Testar SEFAZ</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-lg border border-slate-200 shadow-xs overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-600 uppercase">
+                  <th class="py-2.5 px-3">Modelo</th>
+                  <th class="py-2.5 px-3">Número / Série</th>
+                  <th class="py-2.5 px-3">Data / Hora</th>
+                  <th class="py-2.5 px-4">Destinatário</th>
+                  <th class="py-2.5 px-3 text-right">Valor Total</th>
+                  <th class="py-2.5 px-3 text-center">Status SEFAZ</th>
+                  <th class="py-2.5 px-3 text-center">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <template x-for="note in fiscalNotesList" :key="note.id">
+                  <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-2 px-3 font-mono font-bold">
+                      <span class="px-1.5 py-0.5 rounded text-[10px]" :class="note.model === '65' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'" x-text="'Mod ' + note.model"></span>
+                    </td>
+                    <td class="py-2 px-3 font-mono font-bold text-slate-800" x-text="note.number + ' / ' + note.serie"></td>
+                    <td class="py-2 px-3 font-mono text-slate-500" x-text="note.date"></td>
+                    <td class="py-2 px-4 font-medium text-slate-800" x-text="note.client"></td>
+                    <td class="py-2 px-3 text-right font-mono font-bold text-slate-900" x-text="formatCurrency(note.total)"></td>
+                    <td class="py-2 px-3 text-center">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-semibold"
+                            :class="note.status === 'Autorizada' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'"
+                            x-text="note.status">
+                      </span>
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                      <div class="flex items-center justify-center gap-1">
+                        <button @click="openDanfeViewerModal(note)" class="p-1 text-slate-600 hover:text-emerald-600 rounded" title="Visualizar DANFE">
+                          <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button @click="downloadSimulatedXml(note)" class="p-1 text-slate-600 hover:text-blue-600 rounded" title="Baixar XML">
+                          <i data-lucide="file-code" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button x-show="note.status === 'Autorizada'" @click="cancelFiscalNote(note)" class="p-1 text-slate-600 hover:text-rose-600 rounded" title="Cancelar Nota">
+                          <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- VIEW: HARDWARE LOCAL & CERTIFICADO DIGITAL A1                -->
+        <!-- ============================================================ -->
+        <div x-show="currentView === 'hardware' && !isViewAccessBlocked()" x-transition class="max-w-4xl mx-auto space-y-4">
+          <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1 flex items-center gap-2">
+              <i data-lucide="cpu" class="w-4 h-4 text-emerald-600"></i>
+              Hardware Local, PinPad Serial e Certificado Digital A1
+            </h2>
+            <p class="text-xs text-slate-500">Parâmetros das portas seriais do computador do balcão e chave criptográfica fiscal.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- PinPad USB -->
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs space-y-3">
+              <span class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                <i data-lucide="credit-card" class="w-4 h-4 text-blue-600"></i>
+                PinPad Serial de Balcão (SiTef / PayGo)
+              </span>
+              <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">Gerenciador de TEF</label>
+                <select class="w-full border border-slate-300 rounded px-2.5 py-1.5 text-xs bg-white">
+                  <option>SiTef Dedicado (Software Express)</option>
+                  <option>PayGo Client Integrado</option>
+                </select>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-700 mb-1">Porta COM</label>
+                  <input type="text" value="COM1" class="w-full border border-slate-300 rounded px-2 py-1 text-xs font-mono">
+                </div>
+                <div>
+                  <label class="block text-[11px] font-medium text-slate-700 mb-1">IP Servidor SiTef</label>
+                  <input type="text" value="192.168.1.10" class="w-full border border-slate-300 rounded px-2 py-1 text-xs font-mono">
+                </div>
+              </div>
+              <button @click="showToastMessage('PinPad COM1 detectado e operando.', 'success')" class="w-full py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded text-xs border border-blue-200">
+                Testar Comunicação Serial
+              </button>
+            </div>
+
+            <!-- Certificado A1 -->
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-xs space-y-3">
+              <span class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5 border-b border-slate-100 pb-2">
+                <i data-lucide="key" class="w-4 h-4 text-amber-600"></i>
+                Certificado Digital A1 (.PFX)
+              </span>
+              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded text-xs space-y-1">
+                <p class="font-bold text-slate-800" x-text="currentTenant.tradeName"></p>
+                <p class="text-[11px] text-slate-500 font-mono" x-text="'CNPJ: ' + currentTenant.cnpj"></p>
+                <p class="text-[11px] text-emerald-600 font-semibold">Validade: 18/11/2026 (Ativo ICP-Brasil)</p>
+              </div>
+              <button @click="showToastMessage('Seletor de arquivo .pfx liberado.', 'info')" class="w-full py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold rounded text-xs">
+                Substituir Arquivo .PFX
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 1: CADASTRO DE PRODUTO EM ABAS COM VALIDAÇÃO VISUAL      -->
+    <!-- ============================================================== -->
+    <div x-show="isProductModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         role="dialog" aria-modal="true">
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="isProductModalOpen = false"></div>
+
+      <div class="flex min-h-screen items-center justify-center p-3 text-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl border border-slate-200 flex flex-col max-h-[90vh]">
+
+          <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white shrink-0">
+            <div class="flex items-center gap-2">
+              <i data-lucide="package-plus" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-xs font-bold uppercase tracking-wider">Ficha Cadastral do Produto & Tributação</h3>
+            </div>
+            <button @click="isProductModalOpen = false" class="text-slate-400 hover:text-white">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- NAVEGAÇÃO POR ABAS COM BORDA VERMELHA E BADGE SE HOUVER ERROS -->
+          <div class="bg-slate-100 border-b border-slate-200 px-3 pt-2 flex gap-1.5 overflow-x-auto shrink-0">
+
+            <!-- Aba 1: Dados Gerais (Obrigatórios) -->
+            <button type="button"
+                    @click="productActiveTab = 'general'"
+                    class="tab-transition px-3 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 border-t border-l border-r"
+                    :class="{
+                      'bg-white border-slate-200 text-slate-900 -mb-px': productActiveTab === 'general' && !hasErrorsInTab('general'),
+                      'bg-slate-200/70 border-transparent text-slate-600 hover:bg-slate-200': productActiveTab !== 'general' && !hasErrorsInTab('general'),
+                      'border-rose-500 bg-rose-50 text-rose-800 ring-1 ring-rose-500': hasErrorsInTab('general')
+                    }">
+              <span>1. Dados Gerais *</span>
+              <span x-show="hasErrorsInTab('general')" class="w-4 h-4 rounded-full bg-rose-600 text-white font-bold text-[10px] flex items-center justify-center">!</span>
+            </button>
+
+            <!-- Aba 2: Dimensões, Peso & Logística (Opcionais) -->
+            <button type="button"
+                    @click="productActiveTab = 'dimensions'"
+                    class="tab-transition px-3 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 border-t border-l border-r"
+                    :class="productActiveTab === 'dimensions' ? 'bg-white border-slate-200 text-slate-900 -mb-px' : 'bg-slate-200/70 border-transparent text-slate-600 hover:bg-slate-200'">
+              <span>2. Dimensões & UN (Opcionais)</span>
+            </button>
+
+            <!-- Aba 3: Fiscal & Tributos (NCM Obrigatório) -->
+            <button type="button"
+                    @click="productActiveTab = 'fiscal'"
+                    class="tab-transition px-3 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 border-t border-l border-r"
+                    :class="{
+                      'bg-white border-slate-200 text-slate-900 -mb-px': productActiveTab === 'fiscal' && !hasErrorsInTab('fiscal'),
+                      'bg-slate-200/70 border-transparent text-slate-600 hover:bg-slate-200': productActiveTab !== 'fiscal' && !hasErrorsInTab('fiscal'),
+                      'border-rose-500 bg-rose-50 text-rose-800 ring-1 ring-rose-500': hasErrorsInTab('fiscal')
+                    }">
+              <span>3. Fiscal SEFAZ *</span>
+              <span x-show="hasErrorsInTab('fiscal')" class="w-4 h-4 rounded-full bg-rose-600 text-white font-bold text-[10px] flex items-center justify-center">!</span>
+            </button>
+
+            <!-- Aba 4: Status do Estoque -->
+            <button type="button"
+                    @click="productActiveTab = 'stock_status'"
+                    class="tab-transition px-3 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 border-t border-l border-r"
+                    :class="productActiveTab === 'stock_status' ? 'bg-white border-slate-200 text-slate-900 -mb-px' : 'bg-slate-200/70 border-transparent text-slate-600 hover:bg-slate-200'">
+              <span>4. Status do Estoque</span>
+            </button>
+
+            <!-- Aba 5: Mídia / Foto -->
+            <button type="button"
+                    @click="productActiveTab = 'media'"
+                    class="tab-transition px-3 py-2 rounded-t-lg text-xs font-bold flex items-center gap-1.5 border-t border-l border-r"
+                    :class="productActiveTab === 'media' ? 'bg-white border-slate-200 text-slate-900 -mb-px' : 'bg-slate-200/70 border-transparent text-slate-600 hover:bg-slate-200'">
+              <span>5. Imagem / Foto</span>
+            </button>
+          </div>
+
+          <!-- CORPO DO FORMULÁRIO DE PRODUTO -->
+          <div class="p-5 overflow-y-auto flex-1 text-xs">
+
+            <!-- ABA 1: DADOS GERAIS -->
+            <div x-show="productActiveTab === 'general'" class="space-y-3">
+              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded text-slate-600 mb-2">
+                Campos marcados com (<strong class="text-rose-600">*</strong>) são obrigatórios para a bipagem e fechamento de venda.
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Código de Barras (EAN-13)</label>
+                  <input type="text" x-model="productFormData.ean" placeholder="789..." class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700 mb-1">Categoria</label>
+                  <select x-model="productFormData.category" class="w-full border border-slate-300 rounded px-2 py-1.5 bg-white">
+                    <option value="Bebidas">Bebidas</option>
+                    <option value="Mercearia">Mercearia</option>
+                    <option value="Limpeza">Limpeza</option>
+                    <option value="Laticínios">Laticínios</option>
+                    <option value="Hortifruti">Hortifruti</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-bold text-slate-700 mb-1">Unidade Padrão *</label>
+                  <select x-model="productFormData.unit" class="w-full border border-slate-300 rounded px-2 py-1.5 bg-white font-mono font-bold">
+                    <option value="UN">UN - Unidade</option>
+                    <option value="KG">KG - Quilograma</option>
+                    <option value="LT">LT - Litro</option>
+                    <option value="CX">CX - Caixa</option>
+                    <option value="FD">FD - Fardo</option>
+                    <option value="M">M - Metro</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Descrição Obrigatória -->
+              <div>
+                <label class="block font-bold text-slate-800 mb-1">
+                  Descrição do Produto *
+                  <span x-show="!productFormData.name" class="text-rose-600 text-[10px] ml-1">(Obrigatório)</span>
+                </label>
+                <input type="text"
+                       x-model="productFormData.name"
+                       placeholder="Ex: Óleo de Soja Refinado 900ml"
+                       class="w-full border rounded px-2.5 py-1.5 text-xs"
+                       :class="!productFormData.name ? 'border-rose-500 bg-rose-50/40' : 'border-slate-300'">
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">Custo de Compra (R$)</label>
+                  <input type="number" step="0.01" x-model.number="productFormData.priceCost" class="w-full border border-slate-300 rounded px-2 py-1.5 font-mono">
+                </div>
+                <div>
+                  <label class="block font-bold text-emerald-800 mb-1">
+                    Preço de Venda (R$) *
+                    <span x-show="!productFormData.priceSale || productFormData.priceSale <= 0" class="text-rose-600 text-[10px] ml-1">(Obrigatório)</span>
+                  </label>
+                  <input type="number"
+                         step="0.01"
+                         x-model.number="productFormData.priceSale"
+                         class="w-full border rounded px-2 py-1.5 font-mono font-bold text-emerald-800"
+                         :class="(!productFormData.priceSale || productFormData.priceSale <= 0) ? 'border-rose-500 bg-rose-50/40' : 'border-emerald-500'">
+                </div>
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">Estoque Inicial</label>
+                  <input type="number" step="1" x-model.number="productFormData.stock" class="w-full border border-slate-300 rounded px-2 py-1.5 font-mono">
+                </div>
+              </div>
+            </div>
+
+            <!-- ABA 2: DIMENSÕES, PESO & LOGÍSTICA (OPCIONAIS) -->
+            <div x-show="productActiveTab === 'dimensions'" class="space-y-3">
+              <div class="p-2.5 bg-blue-50 border border-blue-200 rounded text-blue-900 mb-2">
+                Campos <strong>opcionais</strong> para cálculo de frete, conferência de balança e organização em prateleiras.
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">Peso Líquido (kg)</label>
+                  <input type="number" step="0.001" x-model.number="productFormData.weight" placeholder="0.500" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono">
+                </div>
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">Altura (cm)</label>
+                  <input type="number" step="0.1" placeholder="15.0" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono">
+                </div>
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">Largura (cm)</label>
+                  <input type="number" step="0.1" placeholder="8.0" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono">
+                </div>
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">Profundidade (cm)</label>
+                  <input type="number" step="0.1" placeholder="8.0" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono">
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">Localização no Depósito / Prateleira / Gôndola</label>
+                <input type="text" x-model="productFormData.shelf" placeholder="Ex: Corredor 04 - Prateleira B2" class="w-full border border-slate-300 rounded px-2.5 py-1.5">
+              </div>
+            </div>
+
+            <!-- ABA 3: FISCAL SEFAZ (NCM OBRIGATÓRIO) -->
+            <div x-show="productActiveTab === 'fiscal'" class="space-y-3">
+              <div class="p-2.5 bg-slate-50 border border-slate-200 rounded text-slate-600 mb-2">
+                Dados tributários exigidos para autorização da NFC-e Mod 65 e NF-e Mod 55.
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-bold text-slate-800 mb-1">
+                    Código NCM *
+                    <span x-show="!productFormData.ncm" class="text-rose-600 text-[10px] ml-1">(Obrigatório)</span>
+                  </label>
+                  <input type="text"
+                         x-model="productFormData.ncm"
+                         placeholder="Ex: 2202.10.00"
+                         class="w-full border rounded px-2.5 py-1.5 font-mono font-bold"
+                         :class="!productFormData.ncm ? 'border-rose-500 bg-rose-50/40' : 'border-slate-300'">
+                </div>
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">Código CEST (Opcional)</label>
+                  <input type="text" placeholder="03.001.00" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">CFOP Padrão de Venda</label>
+                  <input type="text" value="5.102 (Venda de Mercadoria)" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono bg-slate-50" readonly>
+                </div>
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">CSOSN / ICMS</label>
+                  <select class="w-full border border-slate-300 rounded px-2.5 py-1.5 bg-white">
+                    <option>102 - Tributada pelo Simples Nacional sem crédito</option>
+                    <option>500 - ICMS cobrado anteriormente por substituição tributária</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- ABA 4: STATUS DO ESTOQUE -->
+            <div x-show="productActiveTab === 'stock_status'" class="space-y-3">
+              <div>
+                <label class="block font-bold text-slate-800 mb-1">Status Operacional do Estoque</label>
+                <select x-model="productFormData.stockStatus" class="w-full border border-slate-300 rounded px-2.5 py-2 text-xs bg-white font-bold">
+                  <option value="Ativo">Ativo / Liberado para Vendas no PDV</option>
+                  <option value="Conferência">Em Conferência de Entrada (Temporariamente bloqueado)</option>
+                  <option value="Bloqueado">Bloqueado para Venda (Inventário/Auditoria)</option>
+                  <option value="Inativo">Inativo / Descontinuado</option>
+                </select>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">Estoque Mínimo (Alerta)</label>
+                  <input type="number" step="1" x-model.number="productFormData.stockMin" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono">
+                </div>
+                <div>
+                  <label class="block font-medium text-slate-700 mb-1">Rastreamento por Lote Obrigatório?</label>
+                  <select class="w-full border border-slate-300 rounded px-2.5 py-1.5 bg-white">
+                    <option>Sim, conferir na entrada</option>
+                    <option>Não, produto contínuo</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- ABA 5: MÍDIA / IMAGEM -->
+            <div x-show="productActiveTab === 'media'" class="space-y-3">
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">URL da Imagem do Produto</label>
+                <input type="text" x-model="productFormData.image" placeholder="https://..." class="w-full border border-slate-300 rounded px-2.5 py-1.5">
+              </div>
+
+              <div class="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded">
+                <img :src="productFormData.image || 'https://placehold.co/80x80/f1f5f9/475569?text=SEM+FOTO'"
+                     class="w-20 h-20 rounded-lg object-cover border border-slate-300"
+                     onerror="this.src='https://placehold.co/80x80/f1f5f9/475569?text=SEM+FOTO'">
+                <div>
+                  <p class="font-bold text-slate-800">Prévia da Foto</p>
+                  <p class="text-[11px] text-slate-500">Exibida na grade de itens do balcão e catálogo web.</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Rodapé do Modal com Alerta de Validação -->
+          <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex items-center justify-between shrink-0">
+            <div>
+              <template x-if="hasAnyProductFormErrors()">
+                <div class="flex items-center gap-1.5 text-rose-600 text-[11px] font-bold">
+                  <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                  <span>Preencha os campos obrigatórios destacados nas abas com borda vermelha!</span>
+                </div>
+              </template>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button type="button" @click="isProductModalOpen = false" class="px-3 py-1.5 border border-slate-300 rounded text-slate-700">
+                Cancelar
+              </button>
+              <button type="button"
+                      @click="saveProductRecord()"
+                      :disabled="hasAnyProductFormErrors()"
+                      class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded text-xs shadow-xs transition">
+                Salvar Produto
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 2: NOVA CONFERÊNCIA DE ENTRADA & LOTE                    -->
+    <!-- ============================================================== -->
+    <div x-show="isBatchModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         role="dialog" aria-modal="true">
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="isBatchModalOpen = false"></div>
+
+      <div class="flex min-h-screen items-center justify-center p-3 text-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-xl border border-slate-200">
+
+          <div class="bg-slate-900 px-4 py-3 flex items-center justify-between text-white">
+            <div class="flex items-center gap-2">
+              <i data-lucide="clipboard-check" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-xs font-bold uppercase tracking-wider">Conferência de Entrada & Inspeção de Lote</h3>
+            </div>
+            <button @click="isBatchModalOpen = false" class="text-slate-400 hover:text-white">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <form @submit.prevent="saveBatchConference()" class="p-5 space-y-3.5 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 mb-1">Selecione o Produto Recebido *</label>
+              <select x-model="batchFormData.productId" required class="w-full border border-slate-300 rounded px-2.5 py-1.5 bg-white font-medium">
+                <option value="">Selecione o produto no estoque...</option>
+                <template x-for="p in productsList" :key="p.id">
+                  <option :value="p.id" x-text="p.name + ' (' + p.ean + ')'"></option>
+                </template>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Número do Lote *</label>
+                <input type="text" x-model="batchFormData.code" required placeholder="LOT-2026-X01" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono font-bold">
+              </div>
+              <div>
+                <label class="block font-semibold text-slate-700 mb-1">Quantidade Recebida *</label>
+                <input type="number" step="1" min="1" x-model.number="batchFormData.qty" required class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono font-bold">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">Data de Fabricação</label>
+                <input type="date" x-model="batchFormData.mfgDate" class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono">
+              </div>
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Data de Validade *</label>
+                <input type="date" x-model="batchFormData.expDate" required class="w-full border border-slate-300 rounded px-2.5 py-1.5 font-mono font-bold">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 mb-1">Laudo de Inspeção / Qualidade *</label>
+                <select x-model="batchFormData.quality" class="w-full border border-slate-300 rounded px-2.5 py-1.5 bg-white font-semibold">
+                  <option value="Aprovado">Aprovado (Entrada direta no estoque)</option>
+                  <option value="Quarentena">Quarentena (Aguardando laudo técnico)</option>
+                  <option value="Avariado">Avariado / Recusado (Devolução)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-medium text-slate-700 mb-1">Inspetor Responsável</label>
+                <input type="text" x-model="batchFormData.inspector" class="w-full border border-slate-300 rounded px-2.5 py-1.5">
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200 flex justify-end gap-2">
+              <button type="button" @click="isBatchModalOpen = false" class="px-3 py-1.5 border border-slate-300 rounded text-slate-700">
+                Cancelar
+              </button>
+              <button type="submit" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded">
+                Confirmar Conferência
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 3: FECHAMENTO DE VENDA & MULTIFORMAS DE PAGAMENTO (F4)   -->
+    <!-- ============================================================== -->
+    <div x-show="isPaymentModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         role="dialog" aria-modal="true">
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="isPaymentModalOpen = false"></div>
+
+      <div class="flex min-h-screen items-center justify-center p-3 text-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-slate-200">
+
+          <div class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="credit-card" class="w-4 h-4 text-emerald-400"></i>
+              <h3 class="text-xs font-bold uppercase tracking-wider">Fechamento do Cupom Fiscal (F4)</h3>
+            </div>
+            <button @click="isPaymentModalOpen = false" class="text-slate-400 hover:text-white">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <div class="p-5 space-y-4">
+
+            <!-- Total a Pagar -->
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 flex items-center justify-between">
+              <div>
+                <span class="text-[11px] text-slate-500 uppercase font-semibold">Valor Total a Pagar</span>
+                <p class="text-xs text-slate-700 font-mono" x-text="posCartList.length + ' produtos na bobina'"></p>
+              </div>
+              <div class="text-right">
+                <span class="text-2xl sm:text-3xl font-mono font-black text-slate-900" x-text="formatCurrency(computePosCartTotal())"></span>
+              </div>
+            </div>
+
+            <!-- Seleção da Forma de Pagamento Principal -->
+            <div>
+              <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Selecione o Meio de Pagamento</label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+
+                <!-- Cartão Crédito -->
+                <button type="button"
+                        @click="setPaymentMethod('credit')"
+                        :class="activePaymentMethod === 'credit' ? 'bg-teal-600 text-white ring-2 ring-teal-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                        class="p-2.5 rounded-lg text-center transition flex flex-col items-center gap-1">
+                  <i data-lucide="credit-card" class="w-5 h-5"></i>
+                  <span class="text-xs font-bold">Cartão Crédito</span>
+                </button>
+
+                <!-- Cartão Débito -->
+                <button type="button"
+                        @click="setPaymentMethod('debit')"
+                        :class="activePaymentMethod === 'debit' ? 'bg-teal-600 text-white ring-2 ring-teal-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                        class="p-2.5 rounded-lg text-center transition flex flex-col items-center gap-1">
+                  <i data-lucide="credit-card" class="w-5 h-5"></i>
+                  <span class="text-xs font-bold">Cartão Débito</span>
+                </button>
+
+                <!-- PIX -->
+                <button type="button"
+                        @click="setPaymentMethod('pix')"
+                        :class="activePaymentMethod === 'pix' ? 'bg-teal-700 text-white ring-2 ring-teal-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                        class="p-2.5 rounded-lg text-center transition flex flex-col items-center gap-1">
+                  <i data-lucide="qr-code" class="w-5 h-5"></i>
+                  <span class="text-xs font-bold">PIX Instantâneo</span>
+                </button>
+
+                <!-- Dinheiro -->
+                <button type="button"
+                        @click="setPaymentMethod('cash'); cashReceivedAmount = computePosCartTotal()"
+                        :class="activePaymentMethod === 'cash' ? 'bg-emerald-600 text-white ring-2 ring-emerald-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                        class="p-2.5 rounded-lg text-center transition flex flex-col items-center gap-1">
+                  <i data-lucide="banknote" class="w-5 h-5"></i>
+                  <span class="text-xs font-bold">Dinheiro</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- OPÇÃO 1: CARTÕES COM OS 4 CANAIS DE TEF -->
+            <div x-show="activePaymentMethod === 'credit' || activePaymentMethod === 'debit'" class="border border-slate-200 bg-slate-50/60 p-3.5 rounded-lg space-y-3">
+              <label class="block text-xs font-bold text-slate-800 uppercase">Selecione o Canal de TEF / Captura</label>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <!-- 1. Smart TEF (SmartPOS API) -->
+                <button type="button"
+                        x-show="isModuleLicensed('smart_tef')"
+                        @click="tefChannel = 'smart_tef'; resetTefSimulation()"
+                        :class="tefChannel === 'smart_tef' ? 'bg-teal-600 text-white font-bold ring-1 ring-teal-600' : 'bg-white text-slate-700 border border-slate-300'"
+                        class="p-2 rounded text-center text-xs transition">
+                  <div class="font-bold flex items-center justify-center gap-1">
+                    <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+                    <span>Smart TEF</span>
+                  </div>
+                  <span class="text-[9px] opacity-80 block">SmartPOS Cloud</span>
+                </button>
+
+                <!-- 2. Smart POS -->
+                <button type="button"
+                        @click="tefChannel = 'smart_pos'; resetTefSimulation()"
+                        :class="tefChannel === 'smart_pos' ? 'bg-teal-600 text-white font-bold ring-1 ring-teal-600' : 'bg-white text-slate-700 border border-slate-300'"
+                        class="p-2 rounded text-center text-xs transition">
+                  <div class="font-bold">Smart POS</div>
+                  <span class="text-[9px] opacity-80 block">Android Stone/Cielo</span>
+                </button>
+
+                <!-- 3. PinPad USB -->
+                <button type="button"
+                        x-show="isModuleLicensed('tef_pinpad')"
+                        @click="tefChannel = 'pinpad_usb'; resetTefSimulation()"
+                        :class="tefChannel === 'pinpad_usb' ? 'bg-blue-600 text-white font-bold ring-1 ring-blue-600' : 'bg-white text-slate-700 border border-slate-300'"
+                        class="p-2 rounded text-center text-xs transition">
+                  <div class="font-bold">PinPad USB</div>
+                  <span class="text-[9px] opacity-80 block">SiTef Tradicional</span>
+                </button>
+
+                <!-- 4. POS Manual / TEF Externo -->
+                <button type="button"
+                        @click="tefChannel = 'pos_manual'"
+                        :class="tefChannel === 'pos_manual' ? 'bg-slate-800 text-white font-bold ring-1 ring-slate-800' : 'bg-white text-slate-700 border border-slate-300'"
+                        class="p-2 rounded text-center text-xs transition">
+                  <div class="font-bold">POS Manual</div>
+                  <span class="text-[9px] opacity-80 block">Maquininha Avulsa</span>
+                </button>
+              </div>
+
+              <!-- Fluxo 1: Smart TEF (SmartPOS Cloud API) -->
+              <div x-show="tefChannel === 'smart_tef'" class="bg-white p-3.5 rounded border border-teal-200 space-y-3">
+                <div class="flex items-center justify-between text-xs border-b border-teal-100 pb-2">
+                  <span class="font-bold text-teal-900 flex items-center gap-1.5">
+                    <i data-lucide="smartphone" class="w-4 h-4 text-teal-600"></i>
+                    <span x-text="'SMARTPOS TERMINAL: ' + currentTenant.smartTef.tid"></span>
+                  </span>
+                  <span class="font-mono text-[10px] bg-teal-50 text-teal-800 px-2 py-0.5 rounded border border-teal-200">API CLOUD ATIVA</span>
+                </div>
+
+                <div class="text-center py-3">
+                  <template x-if="tefSimulationStep === 'idle'">
+                    <div class="space-y-2">
+                      <p class="text-xs font-bold text-slate-800">DISPARAR COBRANÇA PARA A MAQUININHA SMARTPOS</p>
+                      <button type="button" @click="dispatchSmartTefPush()" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded shadow-xs">
+                        Enviar para o Smart POS Remoto &rarr;
+                      </button>
+                    </div>
+                  </template>
+
+                  <template x-if="tefSimulationStep === 'waiting_device'">
+                    <div class="space-y-2">
+                      <i data-lucide="loader" class="w-8 h-8 mx-auto text-teal-600 animate-spin"></i>
+                      <p class="text-xs font-bold text-teal-950 uppercase">AGUARDANDO O CLIENTE NO SMART POS...</p>
+                      <button type="button" @click="simulateDeviceApproval()" class="mt-2 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded">
+                        Simular Aprovação do Cliente
+                      </button>
+                    </div>
+                  </template>
+
+                  <template x-if="tefSimulationStep === 'approved'">
+                    <div class="space-y-1">
+                      <i data-lucide="check-circle-2" class="w-7 h-7 mx-auto text-emerald-600"></i>
+                      <p class="text-xs font-bold text-emerald-800 uppercase">SMART TEF APROVADO COM SUCESSO!</p>
+                      <p class="text-[11px] font-mono text-slate-600" x-text="'NSU: ' + tefTransactionNsu + ' • AUTORIZAÇÃO: ' + tefAuthCode"></p>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Fluxo 2: PinPad USB (SiTef) -->
+              <div x-show="tefChannel === 'pinpad_usb'" class="bg-white p-3.5 rounded border border-blue-200 text-center py-3">
+                <template x-if="tefSimulationStep === 'idle'">
+                  <div class="space-y-2">
+                    <i data-lucide="credit-card" class="w-6 h-6 mx-auto text-blue-600"></i>
+                    <p class="text-xs font-bold text-slate-800">INSERIR CARTÃO NO PINPAD DE BALCÃO</p>
+                    <button type="button" @click="dispatchSmartTefPush()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded">
+                      Iniciar Transação PinPad
+                    </button>
+                  </div>
+                </template>
+                <template x-if="tefSimulationStep === 'waiting_device'">
+                  <div class="space-y-2">
+                    <p class="text-xs font-bold text-blue-900">DIGITE A SENHA NO PINPAD...</p>
+                    <button type="button" @click="simulateDeviceApproval()" class="px-3 py-1 bg-emerald-600 text-white rounded text-xs">Aprovar Senha</button>
+                  </div>
+                </template>
+                <template x-if="tefSimulationStep === 'approved'">
+                  <p class="text-xs font-bold text-emerald-700 font-mono" x-text="'PINPAD APROVADO • NSU: ' + tefTransactionNsu"></p>
+                </template>
+              </div>
+
+              <!-- Fluxo 3: POS Manual / TEF Externo (Campos Manuais) -->
+              <div x-show="tefChannel === 'pos_manual'" class="bg-white p-3 rounded border border-slate-200 space-y-2">
+                <p class="text-[11px] text-slate-500 font-semibold">Informe os dados emitidos na filipeta da maquininha avulsa para a SEFAZ:</p>
+                <div class="grid grid-cols-3 gap-2">
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-700">Bandeira</label>
+                    <select x-model="manualPosData.brand" class="w-full border border-slate-300 rounded px-2 py-1 text-xs bg-white">
+                      <option value="Mastercard">Mastercard</option>
+                      <option value="Visa">Visa</option>
+                      <option value="Elo">Elo</option>
+                      <option value="Hipercard">Hipercard</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-700">Código NSU</label>
+                    <input type="text" x-model="manualPosData.nsu" placeholder="123456" class="w-full border border-slate-300 rounded px-2 py-1 text-xs font-mono font-bold">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-bold text-slate-700">Cód. Autorização</label>
+                    <input type="text" x-model="manualPosData.authCode" placeholder="982310" class="w-full border border-slate-300 rounded px-2 py-1 text-xs font-mono font-bold">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- OPÇÃO 2: PIX COM AS 3 MODALIDADES -->
+            <div x-show="activePaymentMethod === 'pix'" class="border border-teal-200 bg-teal-50/40 p-3.5 rounded-lg space-y-3">
+              <label class="block text-xs font-bold text-teal-950 uppercase">Escolha a Modalidade do PIX</label>
+
+              <div class="grid grid-cols-3 gap-2">
+                <button type="button"
+                        @click="pixOption = 'dynamic'"
+                        :class="pixOption === 'dynamic' ? 'bg-teal-700 text-white font-bold ring-1 ring-teal-700' : 'bg-white text-slate-700 border border-slate-300'"
+                        class="p-2 rounded text-center text-xs transition">
+                  <div class="font-bold">PIX Dinâmico</div>
+                  <span class="text-[9px] opacity-80 block">QR Code na Tela</span>
+                </button>
+
+                <button type="button"
+                        @click="pixOption = 'static'"
+                        :class="pixOption === 'static' ? 'bg-teal-700 text-white font-bold ring-1 ring-teal-700' : 'bg-white text-slate-700 border border-slate-300'"
+                        class="p-2 rounded text-center text-xs transition">
+                  <div class="font-bold">PIX Estático</div>
+                  <span class="text-[9px] opacity-80 block">Chave do Balcão</span>
+                </button>
+
+                <button type="button"
+                        @click="pixOption = 'smart_tef_pix'"
+                        :class="pixOption === 'smart_tef_pix' ? 'bg-teal-700 text-white font-bold ring-1 ring-teal-700' : 'bg-white text-slate-700 border border-slate-300'"
+                        class="p-2 rounded text-center text-xs transition">
+                  <div class="font-bold">PIX Maquininha</div>
+                  <span class="text-[9px] opacity-80 block">SmartPOS Visor</span>
+                </button>
+              </div>
+
+              <!-- PIX Dinâmico -->
+              <div x-show="pixOption === 'dynamic'" class="bg-white p-3 rounded border border-teal-200 flex items-center gap-4">
+                <div class="w-24 h-24 bg-slate-900 rounded p-1.5 flex items-center justify-center shrink-0">
+                  <svg viewBox="0 0 100 100" class="w-full h-full text-white fill-current">
+                    <path d="M0,0 h30 v30 h-30 z M10,10 h10 v10 h-10 z M70,0 h30 v30 h-30 z M80,10 h10 v10 h-10 z M0,70 h30 v30 h-30 z M10,80 h10 v10 h-10 z M40,10 h10 v10 h-10 z M50,30 h20 v10 h-20 z M40,60 h10 v30 h-10 z M60,60 h30 v10 h-30 z M70,80 h20 v20 h-20 z M30,40 h10 v20 h-10 z"/>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0 space-y-1.5 text-xs">
+                  <p class="font-bold text-slate-800">QR Code Dinâmico Exclusivo</p>
+                  <p class="text-[11px] font-mono text-slate-500 truncate">00020126580014br.gov.bcb.pix0136nexus-dynamic-payload...</p>
+                  <button type="button" @click="copyPixCode()" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded text-[11px] flex items-center gap-1">
+                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    <span>Copiar Código Pix</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- PIX Estático -->
+              <div x-show="pixOption === 'static'" class="bg-white p-3 rounded border border-teal-200 text-xs space-y-1">
+                <p class="font-bold text-slate-800">Chave PIX Comercial da Loja:</p>
+                <p class="font-mono font-bold text-teal-800 text-sm" x-text="currentTenant.cnpj"></p>
+                <p class="text-[11px] text-slate-500">Confirme o recebimento no aplicativo bancário da empresa antes de liberar.</p>
+              </div>
+
+              <!-- PIX na Maquininha Smart TEF -->
+              <div x-show="pixOption === 'smart_tef_pix'" class="bg-white p-3 rounded border border-teal-200 text-center py-3 text-xs space-y-2">
+                <i data-lucide="smartphone" class="w-6 h-6 mx-auto text-teal-600"></i>
+                <p class="font-bold text-slate-800">QR CODE EXIBIDO NO VISOR DO TERMINAL SMARTPOS</p>
+                <p class="text-[11px] text-slate-500" x-text="'TID: ' + currentTenant.smartTef.tid + ' aguardando escaneamento do cliente'"></p>
+              </div>
+            </div>
+
+            <!-- OPÇÃO 3: DINHEIRO COM TROCO -->
+            <div x-show="activePaymentMethod === 'cash'" class="border border-emerald-200 bg-emerald-50/40 p-3.5 rounded-lg space-y-3">
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Valor Recebido do Cliente (R$)</label>
+                  <input type="number" step="0.01" x-model.number="cashReceivedAmount" class="w-full border border-slate-300 rounded px-3 py-1.5 font-mono text-sm font-bold">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Troco a Devolver</label>
+                  <div class="font-mono text-xl sm:text-2xl font-black text-emerald-700 py-1" x-text="formatCurrency(computeCashChange())"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Rodapé do Modal de Pagamento -->
+          <div class="bg-slate-50 px-5 py-3 border-t border-slate-200 flex items-center justify-between">
+            <button @click="isPaymentModalOpen = false" class="px-3 py-1.5 border border-slate-300 rounded text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
+              Voltar ao Caixa
+            </button>
+            <button @click="finalizeSaleTransaction()"
+                    :disabled="isFinalizePaymentBlocked()"
+                    class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg text-xs shadow-md transition flex items-center gap-2">
+              <i data-lucide="check" class="w-4 h-4"></i>
+              <span>EMITIR NFC-e & CONCLUIR VENDA</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 4: CONSULTA RÁPIDA DE ITENS (F2)                         -->
+    <!-- ============================================================== -->
+    <div x-show="isSearchModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         role="dialog" aria-modal="true">
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="isSearchModalOpen = false"></div>
+
+      <div class="flex min-h-screen items-center justify-center p-3 text-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-2xl border border-slate-200 flex flex-col max-h-[85vh]">
+
+          <div class="bg-slate-900 text-white px-4 py-3 flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="search" class="w-4 h-4 text-emerald-400"></i>
+              Consulta de Itens no Caixa (F2)
+            </span>
+            <button @click="isSearchModalOpen = false" class="text-slate-400 hover:text-white">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <div class="p-3 border-b border-slate-200 bg-slate-50">
+            <input type="text"
+                   x-ref="quickSearchModalInput"
+                   x-model="quickSearchModalQuery"
+                   placeholder="Digite o nome, código interno ou código EAN-13..."
+                   class="w-full px-3 py-2 bg-white border border-slate-300 rounded text-xs focus:ring-1 focus:ring-emerald-500 focus:outline-none">
+          </div>
+
+          <div class="flex-1 overflow-y-auto divide-y divide-slate-100 text-xs">
+            <template x-for="item in quickSearchProductResults" :key="item.id">
+              <div @click="selectProductFromQuickSearch(item)"
+                   class="p-3 hover:bg-emerald-50/60 cursor-pointer flex items-center justify-between transition">
+                <div>
+                  <p class="font-bold text-slate-800" x-text="item.name"></p>
+                  <p class="text-[10px] text-slate-500 font-mono" x-text="'Cód: ' + item.id + ' • EAN: ' + item.ean"></p>
+                </div>
+                <div class="text-right font-mono">
+                  <p class="font-bold text-slate-900" x-text="formatCurrency(item.priceSale)"></p>
+                  <span class="text-[10px]" :class="item.stock > 0 ? 'text-emerald-700' : 'text-rose-700'" x-text="'Saldo: ' + item.stock + ' ' + item.unit"></span>
+                </div>
+              </div>
+            </template>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- MODAL 5: VISUALIZADOR DE DANFE AUTÊNTICO (IMPRESSÃO TÉRMICA)   -->
+    <!-- ============================================================== -->
+    <div x-show="isDanfeModalOpen"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         role="dialog" aria-modal="true">
+      <div class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="isDanfeModalOpen = false"></div>
+
+      <div class="flex min-h-screen items-center justify-center p-3 text-center sm:p-0">
+        <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-xl border border-slate-300 flex flex-col max-h-[90vh]">
+
+          <div class="bg-slate-900 text-white px-4 py-2.5 flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="printer" class="w-4 h-4 text-emerald-400"></i>
+              DANFE NFC-e Impressão Térmica
+            </span>
+            <div class="flex items-center gap-2">
+              <button @click="showToastMessage('Enviado para impressora térmica 80mm...', 'success')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded">
+                Imprimir Cupom
+              </button>
+              <button @click="isDanfeModalOpen = false" class="text-slate-400 hover:text-white">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="p-6 overflow-y-auto bg-slate-50 text-slate-800 font-mono text-[11px] space-y-3">
+            <div class="bg-white p-5 border border-slate-300 rounded shadow-xs space-y-3 leading-tight">
+
+              <!-- Emitente -->
+              <div class="text-center border-b border-dashed border-slate-400 pb-2">
+                <h4 class="font-extrabold text-xs text-slate-900" x-text="currentTenant.tradeName"></h4>
+                <p class="text-[10px] text-slate-600" x-text="'CNPJ: ' + currentTenant.cnpj + ' • IE: ' + currentTenant.ie"></p>
+                <p class="text-[10px] text-slate-500 mt-1">DANFE NFC-e - Documento Auxiliar da Nota Fiscal de Consumidor Eletrônica</p>
+                <p class="text-[10px] font-bold text-slate-700" x-text="selectedDanfeNote ? ('Nº ' + selectedDanfeNote.number + ' Série ' + selectedDanfeNote.serie + ' • Emissão: ' + selectedDanfeNote.date) : ''"></p>
+              </div>
+
+              <!-- Chave de Acesso -->
+              <div class="border border-slate-300 p-2 text-center bg-slate-50 rounded">
+                <span class="text-[9px] uppercase font-bold text-slate-500">CHAVE DE ACESSO DA NOTA FISCAL (SEFAZ SP)</span>
+                <p class="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-900 mt-0.5 break-all" x-text="selectedDanfeNote ? selectedDanfeNote.accessKey : ''"></p>
+              </div>
+
+              <!-- Total Pago -->
+              <div class="border border-slate-300 p-2.5 rounded text-[11px] flex justify-between items-center bg-emerald-50 text-emerald-950">
+                <span class="font-bold">VALOR TOTAL PAGO:</span>
+                <span class="font-bold text-base" x-text="selectedDanfeNote ? formatCurrency(selectedDanfeNote.total) : ''"></span>
+              </div>
+
+              <div class="text-center text-[10px] text-slate-500 pt-2 border-t border-dashed border-slate-300">
+                Protocolo de Autorização SEFAZ: 13526009844219 • 16/10/2026 11:46:12
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- NOTIFICAÇÕES TOAST REATIVAS                                    -->
+    <!-- ============================================================== -->
+    <div x-show="toastNotification.show"
+         x-cloak
+         x-transition
+         class="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-lg shadow-xl text-xs font-semibold text-white tracking-wide"
+         :class="{
+           'bg-slate-900 border border-slate-700': toastNotification.type === 'info',
+           'bg-emerald-700 border border-emerald-500': toastNotification.type === 'success',
+           'bg-rose-700 border border-rose-500': toastNotification.type === 'error'
+         }">
+      <i data-lucide="check-circle" x-show="toastNotification.type === 'success'" class="w-4 h-4"></i>
+      <i data-lucide="info" x-show="toastNotification.type === 'info'" class="w-4 h-4"></i>
+      <i data-lucide="alert-circle" x-show="toastNotification.type === 'error'" class="w-4 h-4"></i>
+      <span x-text="toastNotification.message"></span>
+    </div>
+
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- SISTEMA PRINCIPAL EM ALPINE.JS                                 -->
+  <!-- ============================================================== -->
+  <script>
+    function nexusSystem() {
+      return {
+        // Sessão & Login
+        isAuthenticated: false,
+        isAuthenticating: false,
+        loginRole: 'store_admin',
+        loginEmail: 'admin@mercadocentral.com.br',
+        loginPassword: '••••••••',
+        showPassword: false,
+        rememberMe: true,
+
+        // Usuário Ativo
+        currentUserName: 'Carlos Silva (Gerente da Loja)',
+        currentUserRole: 'store_admin', // 'super_admin' | 'store_admin' | 'cashier'
+        selectedTenantId: 1,
+
+        // Layout & Navegação
+        sidebarCollapsed: false,
+        currentView: 'dashboard',
+        productActiveTab: 'general',
+
+        // Modais
+        isProductModalOpen: false,
+        isBatchModalOpen: false,
+        isPaymentModalOpen: false,
+        isSearchModalOpen: false,
+        isDanfeModalOpen: false,
+
+        // Filtros & Buscas
+        productSearchTerm: '',
+        productFilter: 'all',
+        clientSearchQuery: '',
+        quickSearchModalQuery: '',
+
+        // Frente de Caixa (PDV)
+        posCartList: [],
+        posBarcodeQuery: '',
+        posBarcodeQty: 1,
+        lastScannedProduct: null,
+
+        // Pagamento no PDV (F4)
+        activePaymentMethod: 'credit',
+        tefChannel: 'smart_tef', // 'smart_tef' | 'smart_pos' | 'pinpad_usb' | 'pos_manual'
+        pixOption: 'dynamic',    // 'dynamic' | 'static' | 'smart_tef_pix'
+        tefSimulationStep: 'idle', // 'idle' | 'waiting_device' | 'approved'
+        tefTransactionNsu: '984012',
+        tefAuthCode: '902148',
+        cashReceivedAmount: 0,
+        manualPosData: { brand: 'Mastercard', nsu: '558291', authCode: '774120' },
+        selectedDanfeNote: null,
+
+        // Smart TEF Status
+        smartTefTesting: false,
+
+        // Toast
+        toastNotification: { show: false, message: '', type: 'info' },
+
+        // Tenants Multi-Empresa
+        tenantsList: [
+          {
+            id: 1,
+            code: 'TNT-001',
+            tradeName: 'MERCADO CENTRAL BOM PREÇO LTDA',
+            cnpj: '12.345.678/0001-90',
+            ie: '109.876.543.110',
+            plan: 'Enterprise PRO',
+            modules: { pdv: true, smart_tef: true, tef_pinpad: true, fiscal: true, clients: true },
+            smartTef: {
+              environment: 'production',
+              apiBaseUrl: 'https://api.smarttef.mobi',
+              bearerToken: 'st_live_9948201a88c0042f9b81',
+              gatewayToken: 'gw_sec_77812004bb31',
+              merchantStoreId: 'STORE-SP-001',
+              tid: 'TID-STN-99812',
+              webhookUrl: 'https://erp.mercadocentral.com.br/api/smart-tef/callback',
+              printOnDevice: true
+            }
+          },
+          {
+            id: 2,
+            code: 'TNT-002',
+            tradeName: 'FARMÁCIA VIDA NATURAL',
+            cnpj: '33.998.112/0001-44',
+            ie: '204.112.556.778',
+            plan: 'Standard Balcão',
+            modules: { pdv: true, smart_tef: true, tef_pinpad: false, fiscal: true, clients: false },
+            smartTef: {
+              environment: 'production',
+              apiBaseUrl: 'https://api.smarttef.mobi',
+              bearerToken: 'st_live_farm_3311882200',
+              gatewayToken: 'gw_sec_farm_8820',
+              merchantStoreId: 'STORE-FAR-002',
+              tid: 'TID-FAR-11209',
+              webhookUrl: 'https://erp.vidanatural.com.br/webhook',
+              printOnDevice: true
+            }
+          },
+          {
+            id: 3,
+            code: 'TNT-003',
+            tradeName: 'DISTRIBUIDORA BEBIDAS EXPRESS',
+            cnpj: '44.112.980/0001-09',
+            ie: '556.889.123.001',
+            plan: 'Basic ERP',
+            modules: { pdv: false, smart_tef: false, tef_pinpad: false, fiscal: true, clients: true },
+            smartTef: {
+              environment: 'sandbox',
+              apiBaseUrl: 'https://api.smarttef.mobi',
+              bearerToken: 'st_test_token_001',
+              gatewayToken: 'gw_test_key_001',
+              merchantStoreId: 'STORE-BEB-003',
+              tid: 'TID-BEB-0001',
+              webhookUrl: '',
+              printOnDevice: false
+            }
+          }
+        ],
+
+        // Formulário de Cadastro de Produto com Abas
+        productFormData: {
+          id: '',
+          ean: '',
+          name: '',
+          category: 'Bebidas',
+          unit: 'UN',
+          weight: 0,
+          shelf: '',
+          image: '',
+          priceCost: 0,
+          priceSale: 0,
+          stock: 10,
+          stockMin: 5,
+          stockStatus: 'Ativo',
+          ncm: '2202.10.00'
+        },
+
+        // Formulário de Conferência de Lote
+        batchFormData: {
+          productId: '',
+          code: '',
+          qty: 50,
+          mfgDate: '2026-10-01',
+          expDate: '2027-04-15',
+          quality: 'Aprovado',
+          inspector: 'Carlos Silva'
+        },
+
+        // Mock de Produtos
+        productsList: [
+          { id: '1001', ean: '7894900010015', name: 'Refrigerante Coca-Cola 2L Pet', category: 'Bebidas', unit: 'UN', weight: 2.1, shelf: 'Corredor 1 - Gôndola A', image: 'https://placehold.co/80x80/0f172a/ffffff?text=Coca', priceCost: 6.50, priceSale: 10.99, stock: 42.0, stockMin: 12.0, stockStatus: 'Ativo', ncm: '2202.10.00' },
+          { id: '1002', ean: '7891000100103', name: 'Leite Integral Longa Vida 1L', category: 'Laticínios', unit: 'UN', weight: 1.05, shelf: 'Geladeira 02', image: 'https://placehold.co/80x80/0f172a/ffffff?text=Leite', priceCost: 3.80, priceSale: 5.49, stock: 4.0, stockMin: 10.0, stockStatus: 'Ativo', ncm: '0401.20.10' },
+          { id: '1003', ean: '7896001200341', name: 'Arroz Tipo 1 Agulhinha 5kg', category: 'Mercearia', unit: 'FD', weight: 5.0, shelf: 'Palete 03', image: 'https://placehold.co/80x80/0f172a/ffffff?text=Arroz', priceCost: 19.50, priceSale: 27.90, stock: 2.0, stockMin: 8.0, stockStatus: 'Conferência', ncm: '1006.30.21' },
+          { id: '1004', ean: '7891022883344', name: 'Sabão em Pó Concentrado 1kg', category: 'Limpeza', unit: 'CX', weight: 1.0, shelf: 'Corredor 3', image: 'https://placehold.co/80x80/0f172a/ffffff?text=Sabao', priceCost: 11.20, priceSale: 16.90, stock: 0.0, stockMin: 5.0, stockStatus: 'Bloqueado', ncm: '3402.20.00' },
+          { id: '1005', ean: '7898004561234', name: 'Café Torrado Tradicional 500g', category: 'Mercearia', unit: 'UN', weight: 0.5, shelf: 'Corredor 2', image: 'https://placehold.co/80x80/0f172a/ffffff?text=Cafe', priceCost: 12.00, priceSale: 17.50, stock: 28.0, stockMin: 10.0, stockStatus: 'Ativo', ncm: '0901.21.00' }
+        ],
+
+        // Mock de Lotes
+        batchesList: [
+          { id: 1, code: 'LOTE-2026-CC1', productName: 'Refrigerante Coca-Cola 2L Pet', mfgDate: '10/10/2026', expDate: '15/04/2027', qty: 120, quality: 'Aprovado', inspector: 'Carlos Silva' },
+          { id: 2, code: 'LOTE-2026-LT4', productName: 'Leite Integral Longa Vida 1L', mfgDate: '01/10/2026', expDate: '28/02/2027', qty: 60, quality: 'Quarentena', inspector: 'Mariana Costa' }
+        ],
+
+        // Mock de Clientes
+        clientsList: [
+          { id: 'C01', name: 'Supermercado Central Ltda', doc: '18.990.123/0001-44', creditLimit: 5000.00, balanceDue: 1890.00, status: 'Liberado' },
+          { id: 'C02', name: 'Maria Aparecida da Silva', doc: '289.441.988-12', creditLimit: 800.00, balanceDue: 0.00, status: 'Liberado' }
+        ],
+
+        // Mock de Notas Fiscais SEFAZ
+        fiscalNotesList: [
+          { id: 1, model: '65', number: '001892', serie: '001', date: '16/10/2026 11:22', client: 'Consumidor Final', total: 142.50, status: 'Autorizada', accessKey: '3526 1012 3456 7800 0190 6500 1000 0018 9210 0982 7182' }
+        ],
+
+        initApplication() {
+          this.$nextTick(() => {
+            this.refreshLucideIcons();
+          });
+        },
+
+        refreshLucideIcons() {
+          setTimeout(() => {
+            if (window.lucide) {
+              window.lucide.createIcons();
+            }
+          }, 35);
+        },
+
+        // ==========================================
+        // FLUXO DE LOGIN & PERFIS DEMO
+        // ==========================================
+        setDemoProfile(role) {
+          this.loginRole = role;
+          if (role === 'super_admin') {
+            this.loginEmail = 'master@satautomacao.com';
+            this.loginPassword = '••••••••';
+          } else if (role === 'store_admin') {
+            this.loginEmail = 'admin@mercadocentral.com.br';
+            this.loginPassword = '••••••••';
+            this.selectedTenantId = 1;
+          } else if (role === 'cashier') {
+            this.loginEmail = 'caixa01@mercadocentral.com.br';
+            this.loginPassword = '••••••••';
+            this.selectedTenantId = 1;
+          }
+          this.refreshLucideIcons();
+        },
+
+        executeLogin() {
+          this.isAuthenticating = true;
+          setTimeout(() => {
+            this.isAuthenticating = false;
+            this.currentUserRole = this.loginRole;
+
+            if (this.currentUserRole === 'super_admin') {
+              this.currentUserName = 'Roberto Mello (SaaS Master)';
+              this.currentView = 'super_tenants';
+            } else if (this.currentUserRole === 'store_admin') {
+              this.currentUserName = 'Carlos Silva (Gerente da Loja)';
+              this.currentView = 'dashboard';
+            } else if (this.currentUserRole === 'cashier') {
+              this.currentUserName = 'Aline Ferreira (Operadora Caixa)';
+              this.currentView = this.isModuleLicensed('pdv') ? 'pdv' : 'products';
+            }
+
+            this.isAuthenticated = true;
+            this.showToastMessage(`Acesso liberado: ${this.currentUserName}`, 'success');
+            this.refreshLucideIcons();
+          }, 700);
+        },
+
+        executeLogout() {
+          this.isAuthenticated = false;
+          this.posCartList = [];
+          this.showToastMessage('Sessão encerrada com segurança.', 'info');
+          this.refreshLucideIcons();
+        },
+
+        get currentUserInitials() {
+          return this.currentUserName.split(' ').map(n => n[0]).slice(0, 2).join('');
+        },
+
+        get currentTenant() {
+          return this.tenantsList.find(t => t.id === Number(this.selectedTenantId)) || this.tenantsList[0];
+        },
+
+        get currentUserRoleLabel() {
+          if (this.currentUserRole === 'super_admin') return 'Super Admin SaaS';
+          if (this.currentUserRole === 'store_admin') return 'Admin da Empresa';
+          return 'Operador de Caixa';
+        },
+
+        switchActiveTenant(tenantId) {
+          this.selectedTenantId = Number(tenantId);
+          this.showToastMessage(`Tenant alternado para: ${this.currentTenant.tradeName}`, 'info');
+          this.refreshLucideIcons();
+        },
+
+        isModuleLicensed(moduleId) {
+          if (!this.currentTenant || !this.currentTenant.modules) return false;
+          return !!this.currentTenant.modules[moduleId];
+        },
+
+        isViewAccessBlocked() {
+          if (this.currentView === 'pdv' && !this.isModuleLicensed('pdv')) return true;
+          if (this.currentView === 'smart_tef_config' && !this.isModuleLicensed('smart_tef')) return true;
+          if (this.currentView === 'fiscal' && !this.isModuleLicensed('fiscal')) return true;
+          if (this.currentView === 'clients' && !this.isModuleLicensed('clients')) return true;
+          return false;
+        },
+
+        toggleModuleLicense(moduleId) {
+          this.currentTenant.modules[moduleId] = !this.currentTenant.modules[moduleId];
+          this.showToastMessage(`Módulo [${moduleId.toUpperCase()}] atualizado para ${this.currentTenant.tradeName}`, 'info');
+          this.refreshLucideIcons();
+        },
+
+        changeView(view) {
+          this.currentView = view;
+          this.refreshLucideIcons();
+          if (view === 'pdv') {
+            this.$nextTick(() => {
+              if (this.$refs.barcodeScannerInput) this.$refs.barcodeScannerInput.focus();
+            });
+          }
+        },
+
+        // ==========================================
+        // VALIDAÇÃO DAS ABAS DO PRODUTO
+        // ==========================================
+        hasErrorsInTab(tabName) {
+          if (tabName === 'general') {
+            return !this.productFormData.name || !this.productFormData.priceSale || this.productFormData.priceSale <= 0;
+          }
+          if (tabName === 'fiscal') {
+            return !this.productFormData.ncm;
+          }
+          return false;
+        },
+
+        hasAnyProductFormErrors() {
+          return this.hasErrorsInTab('general') || this.hasErrorsInTab('fiscal');
+        },
+
+        openNewProductModal() {
+          this.productFormData = {
+            id: (1000 + this.productsList.length + 1).toString(),
+            ean: '',
+            name: '',
+            category: 'Bebidas',
+            unit: 'UN',
+            weight: 0,
+            shelf: '',
+            image: '',
+            priceCost: 0,
+            priceSale: 0,
+            stock: 10,
+            stockMin: 5,
+            stockStatus: 'Ativo',
+            ncm: '2202.10.00'
+          };
+          this.productActiveTab = 'general';
+          this.isProductModalOpen = true;
+          this.refreshLucideIcons();
+        },
+
+        editExistingProduct(prod) {
+          this.productFormData = JSON.parse(JSON.stringify(prod));
+          this.productActiveTab = 'general';
+          this.isProductModalOpen = true;
+          this.refreshLucideIcons();
+        },
+
+        saveProductRecord() {
+          if (this.hasAnyProductFormErrors()) {
+            this.showToastMessage('Preencha os campos obrigatórios nas abas destacadas em vermelho!', 'error');
+            return;
+          }
+
+          const existingIndex = this.productsList.findIndex(p => p.id === this.productFormData.id);
+          const formatted = {
+            id: this.productFormData.id,
+            ean: this.productFormData.ean || 'SEM GTIN',
+            name: this.productFormData.name,
+            category: this.productFormData.category,
+            unit: this.productFormData.unit,
+            weight: Number(this.productFormData.weight) || 0,
+            shelf: this.productFormData.shelf,
+            image: this.productFormData.image,
+            priceCost: Number(this.productFormData.priceCost) || 0,
+            priceSale: Number(this.productFormData.priceSale) || 0,
+            stock: Number(this.productFormData.stock) || 0,
+            stockMin: Number(this.productFormData.stockMin) || 0,
+            stockStatus: this.productFormData.stockStatus,
+            ncm: this.productFormData.ncm
+          };
+
+          if (existingIndex >= 0) {
+            this.productsList[existingIndex] = formatted;
+            this.showToastMessage('Produto atualizado com sucesso!', 'success');
+          } else {
+            this.productsList.unshift(formatted);
+            this.showToastMessage('Novo produto cadastrado!', 'success');
+          }
+
+          this.isProductModalOpen = false;
+          this.refreshLucideIcons();
+        },
+
+        // ==========================================
+        // CONFERÊNCIA DE ENTRADA & LOTES
+        // ==========================================
+        openNewBatchModal() {
+          this.batchFormData = {
+            productId: this.productsList[0] ? this.productsList[0].id : '',
+            code: 'LOT-' + new Date().getFullYear() + '-N' + Math.floor(100 + Math.random() * 900),
+            qty: 50,
+            mfgDate: new Date().toISOString().split('T')[0],
+            expDate: '2027-10-16',
+            quality: 'Aprovado',
+            inspector: this.currentUserName
+          };
+          this.isBatchModalOpen = true;
+          this.refreshLucideIcons();
+        },
+
+        saveBatchConference() {
+          const product = this.productsList.find(p => p.id === this.batchFormData.productId);
+          if (!product) return;
+
+          this.batchesList.unshift({
+            id: Date.now(),
+            code: this.batchFormData.code,
+            productName: product.name,
+            mfgDate: this.batchFormData.mfgDate,
+            expDate: this.batchFormData.expDate,
+            qty: Number(this.batchFormData.qty),
+            quality: this.batchFormData.quality,
+            inspector: this.batchFormData.inspector
+          });
+
+          // Se aprovado, abastece o saldo de estoque físico do produto
+          if (this.batchFormData.quality === 'Aprovado') {
+            product.stock += Number(this.batchFormData.qty);
+            product.stockStatus = 'Ativo';
+            this.showToastMessage(`Lote ${this.batchFormData.code} aprovado! +${this.batchFormData.qty} UN adicionadas ao saldo.`, 'success');
+          } else {
+            this.showToastMessage(`Lote registrado sob status: ${this.batchFormData.quality}.`, 'info');
+          }
+
+          this.isBatchModalOpen = false;
+          this.refreshLucideIcons();
+        },
+
+        // ==========================================
+        // OPERAÇÃO FRENTE DE CAIXA (PDV)
+        // ==========================================
+        processBarcodeScan() {
+          const query = this.posBarcodeQuery.trim().toLowerCase();
+          if (!query) return;
+
+          const found = this.productsList.find(p => p.ean === query || p.id === query || p.name.toLowerCase().includes(query));
+
+          if (found) {
+            if (found.stockStatus === 'Bloqueado') {
+              this.showToastMessage('Item BLOQUEADO para comercialização!', 'error');
+              return;
+            }
+            this.addProductToPosCart(found, this.posBarcodeQty);
+            this.posBarcodeQuery = '';
+            this.posBarcodeQty = 1;
+            this.showToastMessage(`+ ${found.name}`, 'info');
+          } else {
+            this.showToastMessage('Produto não localizado na base!', 'error');
+          }
+        },
+
+        addProductToPosCart(product, qty = 1) {
+          const existing = this.posCartList.find(i => i.id === product.id);
+          if (existing) {
+            existing.qty += qty;
+          } else {
+            this.posCartList.push({
+              id: product.id,
+              name: product.name,
+              ean: product.ean,
+              unit: product.unit,
+              price: product.priceSale,
+              qty: qty
+            });
+          }
+
+          this.lastScannedProduct = product;
+          this.refreshLucideIcons();
+
+          this.$nextTick(() => {
+            const container = document.getElementById('posReceiptItemsRoll');
+            if (container) container.scrollTop = container.scrollHeight;
+          });
+        },
+
+        quickAddProductToCart(product) {
+          if (product.stockStatus === 'Bloqueado') {
+            this.showToastMessage('Item BLOQUEADO para comercialização!', 'error');
+            return;
+          }
+          this.addProductToPosCart(product, 1);
+        },
+
+        removePosCartIndex(index) {
+          this.posCartList.splice(index, 1);
+          this.refreshLucideIcons();
+        },
+
+        cancelLastPosItem() {
+          if (this.posCartList.length > 0) {
+            const removed = this.posCartList.pop();
+            this.showToastMessage(`Cancelado: ${removed.name}`, 'info');
+            this.refreshLucideIcons();
+          } else {
+            this.showToastMessage('Nenhum item na bobina para cancelar.', 'error');
+          }
+        },
+
+        clearEntireCart() {
+          if (this.posCartList.length === 0) return;
+          this.posCartList = [];
+          this.lastScannedProduct = null;
+          this.showToastMessage('Cupom cancelado e zerado.', 'info');
+        },
+
+        computePosCartTotal() {
+          return this.posCartList.reduce((acc, item) => acc + (item.price * item.qty), 0);
+        },
+
+        openQuickProductSearchModal() {
+          this.quickSearchModalQuery = '';
+          this.isSearchModalOpen = true;
+          this.$nextTick(() => {
+            if (this.$refs.quickSearchModalInput) this.$refs.quickSearchModalInput.focus();
+            this.refreshLucideIcons();
+          });
+        },
+
+        get quickSearchProductResults() {
+          const q = this.quickSearchModalQuery.toLowerCase();
+          return this.productsList.filter(p => p.name.toLowerCase().includes(q) || p.ean.includes(q) || p.id.includes(q));
+        },
+
+        selectProductFromQuickSearch(prod) {
+          this.addProductToPosCart(prod, 1);
+          this.isSearchModalOpen = false;
+          this.$nextTick(() => {
+            if (this.$refs.barcodeScannerInput) this.$refs.barcodeScannerInput.focus();
+          });
+        },
+
+        // ==========================================
+        // PAGAMENTO MULTIFORMAS (F4)
+        // ==========================================
+        openPaymentModal() {
+          this.activePaymentMethod = 'credit';
+          this.tefChannel = this.isModuleLicensed('smart_tef') ? 'smart_tef' : 'pos_manual';
+          this.pixOption = 'dynamic';
+          this.resetTefSimulation();
+          this.cashReceivedAmount = this.computePosCartTotal();
+          this.isPaymentModalOpen = true;
+          this.refreshLucideIcons();
+        },
+
+        setPaymentMethod(method) {
+          this.activePaymentMethod = method;
+          this.resetTefSimulation();
+          this.refreshLucideIcons();
+        },
+
+        resetTefSimulation() {
+          this.tefSimulationStep = 'idle';
+          this.tefTransactionNsu = (Math.floor(100000 + Math.random() * 900000)).toString();
+          this.tefAuthCode = (Math.floor(100000 + Math.random() * 900000)).toString();
+        },
+
+        dispatchSmartTefPush() {
+          this.tefSimulationStep = 'waiting_device';
+          this.showToastMessage(`Ordem enviada via API para o terminal ${this.currentTenant.smartTef.tid}`, 'info');
+          this.refreshLucideIcons();
+        },
+
+        simulateDeviceApproval() {
+          this.tefSimulationStep = 'approved';
+          this.showToastMessage('Pagamento Aprovado no Terminal SmartPOS!', 'success');
+          this.refreshLucideIcons();
+        },
+
+        testSmartTefApiPing() {
+          this.smartTefTesting = true;
+          setTimeout(() => {
+            this.smartTefTesting = false;
+            this.showToastMessage(`SmartPOS API (${this.currentTenant.smartTef.apiBaseUrl}): Resposta 28ms - Conexão OK`, 'success');
+          }, 600);
+        },
+
+        copyPixCode() {
+          const dummyPayload = "00020126580014br.gov.bcb.pix0136nexus-dynamic-payload-sefaz520400005303986540510.995802BR5925SAT COMERCIAL LTDA6009SAO PAULO62070503***6304ABCD";
+          const tempInput = document.createElement("input");
+          tempInput.value = dummyPayload;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand("copy");
+          document.body.removeChild(tempInput);
+          this.showToastMessage('Código PIX copiado para a área de transferência!', 'success');
+        },
+
+        computeCashChange() {
+          const total = this.computePosCartTotal();
+          const given = Number(this.cashReceivedAmount) || 0;
+          return Math.max(0, given - total);
+        },
+
+        isFinalizePaymentBlocked() {
+          if (this.activePaymentMethod === 'credit' || this.activePaymentMethod === 'debit') {
+            if ((this.tefChannel === 'smart_tef' || this.tefChannel === 'smart_pos' || this.tefChannel === 'pinpad_usb') && this.tefSimulationStep !== 'approved') {
+              return true;
+            }
+          }
+          return false;
+        },
+
+        finalizeSaleTransaction() {
+          const total = this.computePosCartTotal();
+          const nextNum = (1893 + this.fiscalNotesList.length).toString().padStart(6, '0');
+
+          // Abate o saldo de estoque físico dos produtos vendidos
+          this.posCartList.forEach(item => {
+            const p = this.productsList.find(prod => prod.id === item.id);
+            if (p) {
+              p.stock = Math.max(0, p.stock - item.qty);
+            }
+          });
+
+          // Gera a NFC-e emitida e autorizada
+          const newFiscal = {
+            id: Date.now(),
+            model: '65',
+            number: nextNum,
+            serie: '001',
+            date: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            client: 'Consumidor Final',
+            total: total,
+            status: 'Autorizada',
+            accessKey: '3526 10' + Math.floor(1000000000 + Math.random() * 9000000000) + ' 6500 1000 ' + nextNum + ' 10 0982 7189'
+          };
+          this.fiscalNotesList.unshift(newFiscal);
+
+          // Limpa o carrinho do PDV
+          this.posCartList = [];
+          this.lastScannedProduct = null;
+          this.isPaymentModalOpen = false;
+
+          this.showToastMessage(`Venda #${nextNum} Finalizada com Sucesso!`, 'success');
+          this.openDanfeViewerModal(newFiscal);
+        },
+
+        openDanfeViewerModal(note) {
+          this.selectedDanfeNote = note;
+          this.isDanfeModalOpen = true;
+          this.refreshLucideIcons();
+        },
+
+        downloadSimulatedXml(note) {
+          this.showToastMessage(`Download do XML da Nota Fiscal #${note.number} iniciado.`, 'info');
+        },
+
+        cancelFiscalNote(note) {
+          note.status = 'Cancelada';
+          this.showToastMessage(`NFC-e #${note.number} Cancelada com protocolo SEFAZ!`, 'error');
+        },
+
+        // Getters para Listagens Filtradas
+        get filteredProductsList() {
+          return this.productsList.filter(item => {
+            const query = this.productSearchTerm.toLowerCase();
+            const matchText = item.name.toLowerCase().includes(query) || item.ean.includes(query) || item.id.includes(query);
+            let matchStatus = true;
+            if (this.productFilter === 'critical') matchStatus = item.stock <= item.stockMin && item.stock > 0;
+            if (this.productFilter === 'zero') matchStatus = item.stock <= 0;
+            return matchText && matchStatus;
+          });
+        },
+
+        get filteredClientsList() {
+          const q = this.clientSearchQuery.toLowerCase();
+          return this.clientsList.filter(c => c.name.toLowerCase().includes(q) || c.doc.includes(q));
+        },
+
+        calculateTodayTotal() {
+          return 16420.50;
+        },
+
+        // Atalhos de Teclado Globais (F2, F3, F4, F7, Ctrl+K)
+        handleGlobalKeydown(e) {
+          if (!this.isAuthenticated) return;
+
+          if (e.key === 'F2') {
+            e.preventDefault();
+            this.openQuickProductSearchModal();
+          } else if (e.key === 'F4') {
+            e.preventDefault();
+            if (this.currentView === 'pdv' && this.posCartList.length > 0) this.openPaymentModal();
+          } else if (e.key === 'F7') {
+            e.preventDefault();
+            if (this.currentView === 'pdv') this.cancelLastPosItem();
+          } else if (e.key === 'F3' && this.currentUserRole !== 'cashier') {
+            e.preventDefault();
+            this.openNewProductModal();
+          } else if (e.ctrlKey && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            if (this.$refs.globalSearchInput) this.$refs.globalSearchInput.focus();
+          }
+        },
+
+        toggleAppFullscreen() {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        },
+
+        formatCurrency(val) {
+          return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        },
+
+        showToastMessage(msg, type = 'info') {
+          this.toastNotification.message = msg;
+          this.toastNotification.type = type;
+          this.toastNotification.show = true;
+          this.refreshLucideIcons();
+          setTimeout(() => {
+            this.toastNotification.show = false;
+          }, 3200);
+        }
+      };
+    }
+  </script>
+</body>
+</html>
