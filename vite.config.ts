@@ -110,8 +110,8 @@ function staticDirectoryPlugin(): Plugin {
                 const pages = getHtmlFiles(resolve(ROOT_DIR, 'files'), 'files').sort();
 
                 return html.replace(
-                    /<script id="__PAGES_DATA__" type="application\/json">[\s\S]*?<\/script>/,
-                    `<script id="__PAGES_DATA__" type="application/json">${JSON.stringify(pages)}</script>`
+                    /<script[^>]*__PAGES_DATA__[^>]*>[\s\S]*?<\/script>/,
+                    `<script data-el-id="__PAGES_DATA__" id="__PAGES_DATA__" type="application/json">${JSON.stringify(pages)}</script>`
                 );
             }
             return html;

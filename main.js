@@ -18,44 +18,44 @@ let expandedFolders = new Set();
 let toastTimeout = null;
 
 // DOM elements
-const authOverlay = document.getElementById('auth-overlay');
-const authForm = document.getElementById('auth-form');
-const authPasswordInput = document.getElementById('auth-password-input');
-const authErrorMsg = document.getElementById('auth-error-msg');
-const indexContentEl = document.getElementById('index-content');
-const searchInput = document.getElementById('search');
-const searchClearBtn = document.getElementById('search-clear');
-const statsText = document.getElementById('stats-text');
-const btnToggleView = document.getElementById('btn-toggle-view');
-const btnToggleViewText = document.getElementById('btn-toggle-view-text');
-const breadcrumbsEl = document.getElementById('breadcrumbs');
-const baseIndicatorEl = document.getElementById('base-indicator');
-const currentBaseNameEl = document.getElementById('current-base-name');
-const btnOpenChangeBase = document.getElementById('btn-open-change-base');
-const toastEl = document.getElementById('toast');
-const toastMessageEl = document.getElementById('toast-message');
+const authOverlay = document.querySelector('[data-el-id="auth-overlay"]');
+const authForm = document.querySelector('[data-el-id="auth-form"]');
+const authPasswordInput = document.querySelector('[data-el-id="auth-password-input"]');
+const authErrorMsg = document.querySelector('[data-el-id="auth-error-msg"]');
+const indexContentEl = document.querySelector('[data-el-id="index-content"]');
+const searchInput = document.querySelector('[data-el-id="search"]');
+const searchClearBtn = document.querySelector('[data-el-id="search-clear"]');
+const statsText = document.querySelector('[data-el-id="stats-text"]');
+const btnToggleView = document.querySelector('[data-el-id="btn-toggle-view"]');
+const btnToggleViewText = document.querySelector('[data-el-id="btn-toggle-view-text"]');
+const breadcrumbsEl = document.querySelector('[data-el-id="breadcrumbs"]');
+const baseIndicatorEl = document.querySelector('[data-el-id="base-indicator"]');
+const currentBaseNameEl = document.querySelector('[data-el-id="current-base-name"]');
+const btnOpenChangeBase = document.querySelector('[data-el-id="btn-open-change-base"]');
+const toastEl = document.querySelector('[data-el-id="toast"]');
+const toastMessageEl = document.querySelector('[data-el-id="toast-message"]');
 
 // Share Modal Elements
-const shareModal = document.getElementById('share-modal');
-const shareModalClose = document.getElementById('share-modal-close');
-const shareFolderPathInput = document.getElementById('share-folder-path');
-const shareOptSetbase = document.getElementById('share-opt-setbase');
-const shareOptFolder = document.getElementById('share-opt-folder');
-const shareUrlPreview = document.getElementById('share-url-preview');
-const shareBtnCopy = document.getElementById('share-btn-copy');
-const shareBtnTest = document.getElementById('share-btn-test');
+const shareModal = document.querySelector('[data-el-id="share-modal"]');
+const shareModalClose = document.querySelector('[data-el-id="share-modal-close"]');
+const shareFolderPathInput = document.querySelector('[data-el-id="share-folder-path"]');
+const shareOptSetbase = document.querySelector('[data-el-id="share-opt-setbase"]');
+const shareOptFolder = document.querySelector('[data-el-id="share-opt-folder"]');
+const shareUrlPreview = document.querySelector('[data-el-id="share-url-preview"]');
+const shareBtnCopy = document.querySelector('[data-el-id="share-btn-copy"]');
+const shareBtnTest = document.querySelector('[data-el-id="share-btn-test"]');
 let currentSharingFolder = '';
 
 // Change Base Modal Elements
-const changeBaseModal = document.getElementById('change-base-modal');
-const changeBaseClose = document.getElementById('change-base-close');
-const changeBaseAuthStep = document.getElementById('change-base-auth-step');
-const changeBaseInputStep = document.getElementById('change-base-input-step');
-const changeBasePassInput = document.getElementById('change-base-pass-input');
-const changeBasePassError = document.getElementById('change-base-pass-error');
-const changeBaseInput = document.getElementById('change-base-input');
-const btnResetDefaultBase = document.getElementById('btn-reset-default-base');
-const btnApplyBase = document.getElementById('btn-apply-base');
+const changeBaseModal = document.querySelector('[data-el-id="change-base-modal"]');
+const changeBaseClose = document.querySelector('[data-el-id="change-base-close"]');
+const changeBaseAuthStep = document.querySelector('[data-el-id="change-base-auth-step"]');
+const changeBaseInputStep = document.querySelector('[data-el-id="change-base-input-step"]');
+const changeBasePassInput = document.querySelector('[data-el-id="change-base-pass-input"]');
+const changeBasePassError = document.querySelector('[data-el-id="change-base-pass-error"]');
+const changeBaseInput = document.querySelector('[data-el-id="change-base-input"]');
+const btnResetDefaultBase = document.querySelector('[data-el-id="btn-reset-default-base"]');
+const btnApplyBase = document.querySelector('[data-el-id="btn-apply-base"]');
 
 function showToast(message) {
     toastMessageEl.textContent = message;
@@ -466,8 +466,8 @@ function updateShareUrlPreview() {
 function openShareModal(folderPath) {
     currentSharingFolder = normalizePath(folderPath);
     shareFolderPathInput.value = currentSharingFolder ? `files/${currentSharingFolder}` : 'files';
-    shareOptSetbase.checked = true;
-    shareOptFolder.checked = false;
+    shareOptSetbase.checked = false;
+    shareOptFolder.checked = true;
     updateShareUrlPreview();
     shareModal.classList.add('show');
 }
@@ -753,7 +753,7 @@ searchClearBtn.addEventListener('click', () => {
 
 // Load Pages
 async function loadInitialData() {
-    const scriptEl = document.getElementById('__PAGES_DATA__');
+    const scriptEl = document.querySelector('[data-el-id="__PAGES_DATA__"]');
     if (scriptEl && scriptEl.textContent) {
         try {
             const parsed = JSON.parse(scriptEl.textContent.trim());

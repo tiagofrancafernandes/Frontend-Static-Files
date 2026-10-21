@@ -979,15 +979,22 @@
                 </p>
 
                 <!-- Indicator when custom base folder is active -->
-                <div id="base-indicator" class="base-indicator-bar" style="display: none">
+                <div data-el-id="base-indicator" id="base-indicator" class="base-indicator-bar" style="display: none">
                     <div class="base-indicator-left">
                         <iconify-icon icon="fa7-solid:folder-open"></iconify-icon>
                         <span>
                             Pasta base ativa:
-                            <span id="current-base-name" class="base-path-tag">files</span>
+                            <span data-el-id="current-base-name" id="current-base-name" class="base-path-tag">
+                                files
+                            </span>
                         </span>
                     </div>
-                    <button id="btn-open-change-base" class="btn-change-base" type="button">
+                    <button
+                        data-el-id="btn-open-change-base"
+                        id="btn-open-change-base"
+                        class="btn-change-base"
+                        type="button"
+                    >
                         <iconify-icon icon="fa7-solid:sliders"></iconify-icon>
                         <span>Mudar Pasta Base</span>
                     </button>
@@ -998,35 +1005,38 @@
                 <div class="search-wrapper">
                     <iconify-icon icon="fa7-solid:magnifying-glass" class="search-icon"></iconify-icon>
                     <input
+                        data-el-id="search"
                         id="search"
                         class="search-input"
                         type="text"
                         placeholder="Buscar arquivos em files/..."
                         autocomplete="off"
                     />
-                    <button id="search-clear" class="search-clear" title="Limpar busca">&times;</button>
+                    <button data-el-id="search-clear" id="search-clear" class="search-clear" title="Limpar busca">
+                        &times;
+                    </button>
                 </div>
 
                 <div class="toolbar-actions">
-                    <button id="btn-toggle-view" class="btn-view-toggle" type="button">
+                    <button data-el-id="btn-toggle-view" id="btn-toggle-view" class="btn-view-toggle" type="button">
                         <iconify-icon icon="fa7-solid:list"></iconify-icon>
-                        <span id="btn-toggle-view-text">Listar Todos</span>
+                        <span data-el-id="btn-toggle-view-text" id="btn-toggle-view-text">Listar Todos</span>
                     </button>
-                    <div id="stats" class="stats-badge">
+                    <div data-el-id="stats" id="stats" class="stats-badge">
                         <iconify-icon icon="fa7-solid:file-code"></iconify-icon>
-                        <span id="stats-text">Carregando...</span>
+                        <span data-el-id="stats-text" id="stats-text">Carregando...</span>
                     </div>
                 </div>
             </div>
 
             <section class="index-container">
                 <div class="index-header">
-                    <nav id="breadcrumbs" class="breadcrumbs">
+                    <nav data-el-id="breadcrumbs" id="breadcrumbs" class="breadcrumbs">
                         <!-- Rendered dynamically -->
                     </nav>
                 </div>
 
-                <div id="index-content">
+                <div data-el-id="index-content" id="index-content">
                     <!-- Tree or Flat content rendered here -->
                 </div>
             </section>
@@ -1099,16 +1109,17 @@
         </div>
 
         <!-- Password Lock Screen (Shown when base is default and not yet authenticated) -->
-        <div id="auth-overlay" class="auth-overlay">
+        <div data-el-id="auth-overlay" id="auth-overlay" class="auth-overlay">
             <div class="auth-card">
                 <iconify-icon icon="fa7-solid:lock" class="auth-icon"></iconify-icon>
                 <h2 class="auth-title">Acesso Restrito</h2>
                 <p class="auth-desc">
                     Esta é a listagem padrão de todos os arquivos do projeto. Digite a senha para desbloquear o acesso.
                 </p>
-                <form id="auth-form" class="auth-form" onsubmit="return false;">
+                <form data-el-id="auth-form" id="auth-form" class="auth-form" onsubmit="return false;">
                     <div class="auth-input-group">
                         <input
+                            data-el-id="auth-password-input"
                             id="auth-password-input"
                             class="auth-input"
                             type="password"
@@ -1117,31 +1128,43 @@
                             autofocus
                         />
                     </div>
-                    <div id="auth-error-msg" class="auth-error">Senha incorreta. Tente novamente.</div>
-                    <button id="auth-submit-btn" class="auth-btn" type="submit">Entrar</button>
+                    <div data-el-id="auth-error-msg" id="auth-error-msg" class="auth-error">
+                        Senha incorreta. Tente novamente.
+                    </div>
+                    <button data-el-id="auth-submit-btn" id="auth-submit-btn" class="auth-btn" type="submit">
+                        Entrar
+                    </button>
                 </form>
             </div>
         </div>
 
         <!-- Share Folder Modal -->
-        <div id="share-modal" class="modal-backdrop">
+        <div data-el-id="share-modal" id="share-modal" class="modal-backdrop">
             <div class="modal-box">
                 <div class="modal-header">
                     <div class="modal-title">
                         <iconify-icon icon="fa7-solid:share-nodes" style="color: var(--accent)"></iconify-icon>
                         <span>Compartilhar Pasta</span>
                     </div>
-                    <button id="share-modal-close" class="modal-close-btn" type="button">&times;</button>
+                    <button data-el-id="share-modal-close" id="share-modal-close" class="modal-close-btn" type="button">
+                        &times;
+                    </button>
                 </div>
                 <div class="modal-body">
                     <div class="modal-field">
                         <label class="modal-label">Pasta selecionada:</label>
-                        <input id="share-folder-path" class="modal-input" type="text" readonly />
+                        <input
+                            data-el-id="share-folder-path"
+                            id="share-folder-path"
+                            class="modal-input"
+                            type="text"
+                            readonly
+                        />
                     </div>
 
                     <div class="modal-field">
                         <label class="checkbox-label">
-                            <input id="share-opt-setbase" type="checkbox" checked />
+                            <input data-el-id="share-opt-setbase" id="share-opt-setbase" type="checkbox" checked />
                             <span>
                                 <strong>Definir como pasta base (set_base)</strong>
                                 <span class="checkbox-subtext">
@@ -1153,7 +1176,7 @@
 
                     <div class="modal-field">
                         <label class="checkbox-label">
-                            <input id="share-opt-folder" type="checkbox" />
+                            <input data-el-id="share-opt-folder" id="share-opt-folder" type="checkbox" />
                             <span>
                                 <strong>Incluir parâmetro folder na URL (?folder=...)</strong>
                                 <span class="checkbox-subtext">
@@ -1165,15 +1188,21 @@
 
                     <div class="modal-field">
                         <label class="modal-label">URL de compartilhamento:</label>
-                        <input id="share-url-preview" class="modal-input" type="text" readonly />
+                        <input
+                            data-el-id="share-url-preview"
+                            id="share-url-preview"
+                            class="modal-input"
+                            type="text"
+                            readonly
+                        />
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="share-btn-test" class="btn-action btn-copy" type="button">
+                    <button data-el-id="share-btn-test" id="share-btn-test" class="btn-action btn-copy" type="button">
                         <iconify-icon icon="fa7-solid:arrow-up-right-from-square"></iconify-icon>
                         <span>Testar Link</span>
                     </button>
-                    <button id="share-btn-copy" class="btn-action btn-view" type="button">
+                    <button data-el-id="share-btn-copy" id="share-btn-copy" class="btn-action btn-view" type="button">
                         <iconify-icon icon="fa7-solid:copy"></iconify-icon>
                         <span>Copiar Link</span>
                     </button>
@@ -1182,27 +1211,31 @@
         </div>
 
         <!-- Change Base Modal -->
-        <div id="change-base-modal" class="modal-backdrop">
+        <div data-el-id="change-base-modal" id="change-base-modal" class="modal-backdrop">
             <div class="modal-box">
                 <div class="modal-header">
                     <div class="modal-title">
                         <iconify-icon icon="fa7-solid:sliders" style="color: var(--accent)"></iconify-icon>
                         <span>Mudar Pasta Base</span>
                     </div>
-                    <button id="change-base-close" class="modal-close-btn" type="button">&times;</button>
+                    <button data-el-id="change-base-close" id="change-base-close" class="modal-close-btn" type="button">
+                        &times;
+                    </button>
                 </div>
                 <div class="modal-body">
                     <!-- Password step if not already unlocked -->
-                    <div id="change-base-auth-step" style="display: none">
+                    <div data-el-id="change-base-auth-step" id="change-base-auth-step" style="display: none">
                         <div class="modal-field">
                             <label class="modal-label">Digite a senha para alterar a pasta base:</label>
                             <input
+                                data-el-id="change-base-pass-input"
                                 id="change-base-pass-input"
                                 class="modal-input"
                                 type="password"
                                 placeholder="Senha"
                             />
                             <div
+                                data-el-id="change-base-pass-error"
                                 id="change-base-pass-error"
                                 class="auth-error"
                                 style="display: none; margin-top: 0.3rem"
@@ -1213,10 +1246,11 @@
                     </div>
 
                     <!-- Input step -->
-                    <div id="change-base-input-step">
+                    <div data-el-id="change-base-input-step" id="change-base-input-step">
                         <div class="modal-field">
                             <label class="modal-label">Caminho da nova pasta base (sob files/):</label>
                             <input
+                                data-el-id="change-base-input"
                                 id="change-base-input"
                                 class="modal-input"
                                 type="text"
@@ -1229,10 +1263,15 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button id="btn-reset-default-base" class="btn-action btn-copy" type="button">
+                    <button
+                        data-el-id="btn-reset-default-base"
+                        id="btn-reset-default-base"
+                        class="btn-action btn-copy"
+                        type="button"
+                    >
                         <span>Restaurar Padrão</span>
                     </button>
-                    <button id="btn-apply-base" class="btn-action btn-view" type="button">
+                    <button data-el-id="btn-apply-base" id="btn-apply-base" class="btn-action btn-view" type="button">
                         <span>Aplicar</span>
                     </button>
                 </div>
@@ -1240,12 +1279,12 @@
         </div>
 
         <!-- Toast notification -->
-        <div id="toast" class="toast">
+        <div data-el-id="toast" id="toast" class="toast">
             <iconify-icon icon="fa7-solid:circle-check" class="toast-icon"></iconify-icon>
-            <span id="toast-message">Copiado com sucesso!</span>
+            <span data-el-id="toast-message" id="toast-message">Copiado com sucesso!</span>
         </div>
 
-        <script id="__PAGES_DATA__" type="application/json">
+        <script data-el-id="__PAGES_DATA__" id="__PAGES_DATA__" type="application/json">
             []
         </script>
 
