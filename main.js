@@ -530,7 +530,9 @@ changeBaseModal.addEventListener('click', (e) => {
 });
 
 btnResetDefaultBase.addEventListener('click', () => {
+    localStorage.removeItem('saved_base_folder');
     const url = new URL(window.location.origin + window.location.pathname);
+    url.searchParams.set('set_base', '');
     window.location.href = url.href;
 });
 
@@ -553,7 +555,11 @@ btnApplyBase.addEventListener('click', () => {
     const newBase = normalizePath(changeBaseInput.value);
     const url = new URL(window.location.origin + window.location.pathname);
     if (newBase && newBase !== 'files') {
+        localStorage.setItem('saved_base_folder', newBase);
         url.searchParams.set('set_base', newBase);
+    } else {
+        localStorage.removeItem('saved_base_folder');
+        url.searchParams.set('set_base', '');
     }
     window.location.href = url.href;
 });
@@ -569,14 +575,31 @@ function checkInitialAccess() {
 
     let isCustomBase = false;
 
-    if (reqBase !== null && !isDefaultBase(reqBase) && folderExists(normBase)) {
-        activeBase = normBase;
-        isCustomBase = true;
+    if (reqBase !== null) {
+        if (!isDefaultBase(reqBase) && folderExists(normBase)) {
+            activeBase = normBase;
+            isCustomBase = true;
+            localStorage.setItem('saved_base_folder', activeBase);
+        } else {
+            // Explicitly set to empty/default: remove from localStorage
+            activeBase = '';
+            localStorage.removeItem('saved_base_folder');
+        }
     } else if (reqFolder !== null && !isDefaultBase(reqFolder) && folderExists(normFolder)) {
         activeBase = normFolder;
         isCustomBase = true;
+        localStorage.setItem('saved_base_folder', activeBase);
     } else {
-        activeBase = '';
+        // Not in query parameters: restore from localStorage if available
+        const savedBase = localStorage.getItem('saved_base_folder');
+        const normSaved = normalizePath(savedBase);
+        if (normSaved && !isDefaultBase(normSaved) && folderExists(normSaved)) {
+            activeBase = normSaved;
+            isCustomBase = true;
+        } else {
+            activeBase = '';
+            localStorage.removeItem('saved_base_folder');
+        }
     }
 
     // If custom base active, show base indicator in header
