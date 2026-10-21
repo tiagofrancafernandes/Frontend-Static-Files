@@ -56,6 +56,7 @@ const changeBasePassError = document.querySelector('[data-el-id="change-base-pas
 const changeBaseInput = document.querySelector('[data-el-id="change-base-input"]');
 const btnResetDefaultBase = document.querySelector('[data-el-id="btn-reset-default-base"]');
 const btnApplyBase = document.querySelector('[data-el-id="btn-apply-base"]');
+const btnApplyBaseText = document.querySelector('[data-el-id="btn-apply-base-text"]');
 
 function showToast(message) {
     toastMessageEl.textContent = message;
@@ -506,17 +507,17 @@ shareBtnTest.addEventListener('click', () => {
 
 // Change Base Modal Handlers
 function openChangeBaseModal() {
-    if (!isAuthenticated()) {
-        changeBaseAuthStep.style.display = 'block';
-        changeBaseInputStep.style.display = 'none';
-        changeBasePassInput.value = '';
-        changeBasePassError.style.display = 'none';
-    } else {
-        changeBaseAuthStep.style.display = 'none';
-        changeBaseInputStep.style.display = 'block';
-        changeBaseInput.value = activeBase;
+    changeBaseAuthStep.style.display = 'block';
+    changeBaseInputStep.style.display = 'none';
+    changeBasePassInput.value = '';
+    changeBasePassError.style.display = 'none';
+    if (btnApplyBaseText) {
+        btnApplyBaseText.textContent = 'Avançar';
     }
     changeBaseModal.classList.add('show');
+    setTimeout(() => {
+        changeBasePassInput.focus();
+    }, 50);
 }
 
 function closeChangeBaseModal() {
@@ -530,6 +531,16 @@ changeBaseModal.addEventListener('click', (e) => {
 });
 
 btnResetDefaultBase.addEventListener('click', () => {
+    // If auth step is active, validate password before allowing reset
+    if (changeBaseAuthStep.style.display !== 'none') {
+        if (!validatePassword(changeBasePassInput.value)) {
+            changeBasePassError.style.display = 'block';
+            changeBasePassInput.select();
+            return;
+        }
+        setAuthenticated();
+    }
+
     localStorage.removeItem('saved_base_folder');
     const url = new URL(window.location.origin + window.location.pathname);
     url.searchParams.delete('set_base');
@@ -545,10 +556,14 @@ btnApplyBase.addEventListener('click', () => {
             changeBaseAuthStep.style.display = 'none';
             changeBaseInputStep.style.display = 'block';
             changeBaseInput.value = activeBase;
+            if (btnApplyBaseText) {
+                btnApplyBaseText.textContent = 'Aplicar';
+            }
             changeBaseInput.focus();
             return;
         } else {
             changeBasePassError.style.display = 'block';
+            changeBasePassInput.select();
             return;
         }
     }
@@ -563,6 +578,20 @@ btnApplyBase.addEventListener('click', () => {
         url.searchParams.delete('set_base');
     }
     window.location.href = url.href;
+});
+
+changeBasePassInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        btnApplyBase.click();
+    }
+});
+
+changeBaseInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        btnApplyBase.click();
+    }
 });
 
 // Auth Screen Handlers

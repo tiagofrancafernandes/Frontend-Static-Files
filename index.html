@@ -1223,30 +1223,31 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <!-- Password step if not already unlocked -->
-                    <div data-el-id="change-base-auth-step" id="change-base-auth-step" style="display: none">
+                    <!-- Password step (requires password to alter or reset base) -->
+                    <div data-el-id="change-base-auth-step" id="change-base-auth-step">
                         <div class="modal-field">
-                            <label class="modal-label">Digite a senha para alterar a pasta base:</label>
+                            <label class="modal-label">Digite a senha para alterar ou restaurar a pasta base:</label>
                             <input
                                 data-el-id="change-base-pass-input"
                                 id="change-base-pass-input"
                                 class="modal-input"
                                 type="password"
-                                placeholder="Senha"
+                                placeholder="Digite a senha"
+                                autocomplete="current-password"
                             />
                             <div
                                 data-el-id="change-base-pass-error"
                                 id="change-base-pass-error"
                                 class="auth-error"
-                                style="display: none; margin-top: 0.3rem"
+                                style="display: none; margin-top: 0.35rem"
                             >
-                                Senha incorreta.
+                                Senha incorreta. Tente novamente.
                             </div>
                         </div>
                     </div>
 
-                    <!-- Input step -->
-                    <div data-el-id="change-base-input-step" id="change-base-input-step">
+                    <!-- Input step (revealed after password confirmation) -->
+                    <div data-el-id="change-base-input-step" id="change-base-input-step" style="display: none">
                         <div class="modal-field">
                             <label class="modal-label">Caminho da nova pasta base (sob files/):</label>
                             <input
@@ -1254,10 +1255,11 @@
                                 id="change-base-input"
                                 class="modal-input"
                                 type="text"
-                                placeholder="Ex: clientes/fulano (deixe vazio para restaurar padrão)"
+                                placeholder="Ex: clientes/fulano"
                             />
                             <span class="checkbox-subtext" style="margin-top: 0.35rem">
-                                Deixe vazio ou digite "/" para voltar à visualização padrão de todas as pastas.
+                                Digite o caminho da nova pasta raiz ou use "Restaurar Padrão" para listar todos os
+                                arquivos de /files.
                             </span>
                         </div>
                     </div>
@@ -1272,7 +1274,7 @@
                         <span>Restaurar Padrão</span>
                     </button>
                     <button data-el-id="btn-apply-base" id="btn-apply-base" class="btn-action btn-view" type="button">
-                        <span>Aplicar</span>
+                        <span data-el-id="btn-apply-base-text" id="btn-apply-base-text">Avançar</span>
                     </button>
                 </div>
             </div>
