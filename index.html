@@ -808,6 +808,160 @@
                 color: var(--success);
                 font-size: 1.2rem;
             }
+
+            /* Author Footer & About Section */
+            .author-footer {
+                margin-top: 3rem;
+                padding-top: 2rem;
+                border-top: 1px solid var(--border);
+            }
+
+            .author-card {
+                display: flex;
+                align-items: center;
+                gap: 1.5rem;
+                background-color: var(--bg-surface);
+                border: 1px solid var(--border);
+                border-radius: 1rem;
+                padding: 1.75rem;
+                transition:
+                    border-color 0.2s,
+                    box-shadow 0.2s;
+            }
+
+            .author-card:hover {
+                border-color: rgba(56, 189, 248, 0.4);
+                box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            }
+
+            .author-avatar-col {
+                flex-shrink: 0;
+            }
+
+            .author-avatar-wrapper {
+                width: 76px;
+                height: 76px;
+                border-radius: 50%;
+                overflow: hidden;
+                border: 2px solid var(--accent);
+                background-color: var(--bg-card);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .author-avatar {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+
+            .author-avatar-fallback {
+                font-size: 2.25rem;
+                color: var(--text-muted);
+            }
+
+            .author-info-col {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .author-header-line {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                margin-bottom: 0.4rem;
+            }
+
+            .author-name {
+                font-size: 1.25rem;
+                font-weight: 700;
+                color: var(--text-main);
+            }
+
+            .author-badge {
+                font-size: 0.75rem;
+                font-weight: 500;
+                padding: 0.2rem 0.6rem;
+                border-radius: 9999px;
+                background-color: var(--badge-bg);
+                color: var(--badge-text);
+                border: 1px solid rgba(56, 189, 248, 0.25);
+            }
+
+            .author-bio {
+                color: var(--text-muted);
+                font-size: 0.9rem;
+                line-height: 1.5;
+                margin-bottom: 1rem;
+            }
+
+            .author-links {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+
+            .author-link {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.45rem;
+                padding: 0.45rem 0.9rem;
+                border-radius: 0.5rem;
+                font-size: 0.85rem;
+                font-weight: 500;
+                color: var(--text-main);
+                background-color: var(--bg-card);
+                border: 1px solid var(--border);
+                text-decoration: none;
+                transition: all 0.15s ease;
+            }
+
+            .author-link:hover {
+                transform: translateY(-2px);
+                border-color: var(--accent);
+                color: var(--accent);
+                background-color: var(--bg-card-hover);
+            }
+
+            .author-link-icon {
+                font-size: 1.1rem;
+            }
+
+            .author-link-icon.linkedin {
+                color: #0a66c2;
+            }
+
+            .author-link-icon.github {
+                color: #f0f6fc;
+            }
+
+            .author-link-icon.website {
+                color: var(--accent);
+            }
+
+            .author-link:hover .author-link-icon {
+                color: var(--accent);
+            }
+
+            @media (max-width: 640px) {
+                .author-card {
+                    flex-direction: column;
+                    text-align: center;
+                    align-items: center;
+                }
+
+                .author-header-line {
+                    justify-content: center;
+                }
+
+                .author-links {
+                    justify-content: center;
+                }
+            }
         </style>
     </head>
     <body>
@@ -876,6 +1030,72 @@
                     <!-- Tree or Flat content rendered here -->
                 </div>
             </section>
+
+            <!-- Author / Sobre Mim Footer -->
+            <footer class="author-footer">
+                <div class="author-card">
+                    <div class="author-avatar-col">
+                        <div class="author-avatar-wrapper">
+                            <img
+                                src="https://github.com/tiagofrancafernandes.png"
+                                alt="Tiago França"
+                                class="author-avatar"
+                                onerror="
+                                    this.onerror = null;
+                                    this.parentElement.innerHTML =
+                                        '<iconify-icon icon=\'fa7-solid:user\' class=\'author-avatar-fallback\'></iconify-icon>';
+                                "
+                            />
+                        </div>
+                    </div>
+                    <div class="author-info-col">
+                        <div class="author-header-line">
+                            <h3 class="author-name">Tiago França</h3>
+                            <span class="author-badge">Tech Lead & Full Stack Developer</span>
+                        </div>
+                        <p class="author-bio">
+                            Desenvolvedor apaixonado por soluções elegantes, alta performance e arquitetura de software
+                            escalável. Especialista em ecossistemas modernos de desenvolvimento web, prototipagem ágil e
+                            automação.
+                        </p>
+                        <div class="author-links">
+                            <a
+                                href="https://linkedin.com/in/tiago-php"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="author-link"
+                                title="LinkedIn de Tiago França"
+                            >
+                                <iconify-icon
+                                    icon="fa7-brands:linkedin"
+                                    class="author-link-icon linkedin"
+                                ></iconify-icon>
+                                <span>LinkedIn</span>
+                            </a>
+                            <a
+                                href="https://github.com/tiagofrancafernandes"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="author-link"
+                                title="GitHub de Tiago França"
+                            >
+                                <iconify-icon icon="fa7-brands:github" class="author-link-icon github"></iconify-icon>
+                                <span>GitHub</span>
+                            </a>
+                            <a
+                                href="https://tiagofranca.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="author-link"
+                                title="Site oficial de Tiago França"
+                            >
+                                <iconify-icon icon="fa7-solid:globe" class="author-link-icon website"></iconify-icon>
+                                <span>Site Oficial</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </footer>
         </div>
 
         <!-- Password Lock Screen (Shown when base is default and not yet authenticated) -->
