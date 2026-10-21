@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="description" content="Jeliel Representações — representação comercial para o mercado musical." />
+        <title>Jeliel Representações</title>
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600&family=DM+Sans:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+        <style type="text/tailwindcss">
+            @theme {
+                --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+                --font-serif: 'Bodoni Moda', Georgia, serif;
+            }
+
+            [x-cloak] {
+                display: none !important;
+            }
+
+            html {
+                scroll-behavior: smooth;
+            }
+        </style>
+    </head>
+
+    <body class="bg-stone-50 font-sans text-slate-900 antialiased" x-data="jelielSite()">
+        <header class="sticky top-0 z-50 border-b border-slate-900/10 bg-stone-50/95 backdrop-blur">
+            <div class="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8 lg:px-10">
+                <a href="#inicio" aria-label="Jeliel Representações — início" class="shrink-0">
+                    <img src="./logo-jeliel.png" alt="Jeliel Representações" class="h-12 w-auto sm:h-14" />
+                </a>
+
+                <nav class="hidden items-center gap-8 lg:flex" aria-label="Navegação principal">
+                    <a href="#marcas" class="text-sm font-medium text-slate-600 transition hover:text-orange-600">
+                        Marcas
+                    </a>
+                    <a href="#categorias" class="text-sm font-medium text-slate-600 transition hover:text-orange-600">
+                        Categorias
+                    </a>
+                    <a href="#sobre" class="text-sm font-medium text-slate-600 transition hover:text-orange-600">
+                        Sobre
+                    </a>
+                    <a href="#contato" class="text-sm font-medium text-slate-600 transition hover:text-orange-600">
+                        Contato
+                    </a>
+                </nav>
+
+                <a
+                    href="#contato"
+                    class="hidden items-center gap-2 border-b border-orange-600 pb-1 text-sm font-semibold text-slate-900 transition hover:text-orange-600 sm:inline-flex"
+                >
+                    Fale com a Jeliel
+                    <span aria-hidden="true">↗</span>
+                </a>
+
+                <button
+                    type="button"
+                    class="inline-flex rounded-lg p-2 text-slate-800 transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 lg:hidden"
+                    :aria-expanded="isMenuOpen.toString()"
+                    aria-controls="mobile-menu"
+                    aria-label="Abrir menu"
+                    @click="toggleMenu"
+                >
+                    <svg
+                        x-show="!isMenuOpen"
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                    >
+                        <path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" />
+                    </svg>
+                    <svg
+                        x-show="isMenuOpen"
+                        x-cloak
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                    >
+                        <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                </button>
+            </div>
+
+            <div
+                id="mobile-menu"
+                x-show="isMenuOpen"
+                x-cloak
+                x-transition
+                class="border-t border-slate-900/10 bg-stone-50 lg:hidden"
+            >
+                <nav class="mx-auto flex max-w-7xl flex-col px-5 py-3 sm:px-8" aria-label="Navegação mobile">
+                    <a href="#marcas" class="border-b border-slate-900/10 py-4 text-sm font-medium" @click="closeMenu">
+                        Marcas
+                    </a>
+                    <a
+                        href="#categorias"
+                        class="border-b border-slate-900/10 py-4 text-sm font-medium"
+                        @click="closeMenu"
+                    >
+                        Categorias
+                    </a>
+                    <a href="#sobre" class="border-b border-slate-900/10 py-4 text-sm font-medium" @click="closeMenu">
+                        Sobre
+                    </a>
+                    <a href="#contato" class="py-4 text-sm font-medium" @click="closeMenu">Contato</a>
+                </nav>
+            </div>
+        </header>
+
+        <main id="inicio">
+            <section class="overflow-hidden border-b border-slate-900/10 bg-stone-50">
+                <div class="mx-auto grid max-w-7xl lg:min-h-[42rem] lg:grid-cols-12 lg:px-10">
+                    <div
+                        class="flex flex-col justify-center px-5 py-20 sm:px-8 sm:py-24 lg:col-span-7 lg:px-0 lg:py-28"
+                    >
+                        <p class="mb-7 text-xs font-semibold uppercase tracking-[0.24em] text-orange-600">
+                            Representação comercial · Mercado musical
+                        </p>
+
+                        <h1
+                            class="max-w-4xl text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-slate-950 sm:text-6xl lg:text-7xl"
+                        >
+                            Marcas que chegam ao varejo
+                            <span class="font-serif font-medium italic text-orange-600">com propósito.</span>
+                        </h1>
+
+                        <p class="mt-8 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+                            A Jeliel conecta fabricantes, marcas e lojistas do mercado musical com representação
+                            próxima, relacionamento e presença comercial.
+                        </p>
+
+                        <div class="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center">
+                            <a
+                                href="#marcas"
+                                class="inline-flex items-center justify-center gap-3 rounded-full bg-orange-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-600 focus:ring-offset-2"
+                            >
+                                Conheça o portfólio
+                                <span aria-hidden="true">→</span>
+                            </a>
+                            <a
+                                href="#sobre"
+                                class="inline-flex items-center justify-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-orange-600"
+                            >
+                                Conheça a Jeliel
+                                <span aria-hidden="true">↗</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div
+                        class="relative hidden min-h-[42rem] overflow-hidden border-l border-slate-900/10 lg:col-span-5 lg:block"
+                    >
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div
+                                class="relative flex h-[30rem] w-[30rem] items-center justify-center rounded-full border border-orange-200"
+                            >
+                                <div class="absolute inset-8 rounded-full border border-rose-200"></div>
+                                <div class="absolute inset-16 rounded-full border border-emerald-200"></div>
+                                <div class="absolute inset-24 rounded-full border border-orange-100"></div>
+
+                                <div
+                                    class="relative z-10 flex h-64 w-64 items-center justify-center rounded-full bg-white shadow-[0_2rem_5rem_-2rem_rgba(15,23,42,0.28)]"
+                                >
+                                    <img
+                                        src="./logo-jeliel.png"
+                                        alt="Jeliel Representações"
+                                        class="w-48 object-contain"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="absolute left-8 top-24 border-l-2 border-orange-500 pl-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Presença</p>
+                            <p class="mt-1 text-sm font-semibold text-slate-900">Relacionamento comercial</p>
+                        </div>
+
+                        <div class="absolute bottom-24 right-8 border-r-2 border-rose-300 pr-4 text-right">
+                            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Atuação</p>
+                            <p class="mt-1 text-sm font-semibold text-slate-900">Mercado musical</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="border-b border-slate-900/10 bg-white">
+                <div
+                    class="mx-auto grid max-w-7xl divide-y divide-slate-900/10 px-5 sm:px-8 md:grid-cols-3 md:divide-x md:divide-y-0 lg:px-10"
+                >
+                    <div class="py-7 md:px-8 md:py-9 md:first:pl-0">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">01</p>
+                        <p class="mt-3 text-lg font-semibold tracking-tight">Representação</p>
+                        <p class="mt-1 text-sm leading-6 text-slate-500">Presença comercial entre marcas e varejo.</p>
+                    </div>
+                    <div class="py-7 md:px-8 md:py-9">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">02</p>
+                        <p class="mt-3 text-lg font-semibold tracking-tight">Relacionamento</p>
+                        <p class="mt-1 text-sm leading-6 text-slate-500">Atendimento próximo e comunicação direta.</p>
+                    </div>
+                    <div class="py-7 md:px-8 md:py-9 md:last:pr-0">
+                        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">03</p>
+                        <p class="mt-3 text-lg font-semibold tracking-tight">Portfólio</p>
+                        <p class="mt-1 text-sm leading-6 text-slate-500">
+                            Marcas e categorias para diferentes negócios.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="marcas" class="scroll-mt-20 bg-white py-24 sm:py-28">
+                <div class="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+                    <div class="grid gap-10 lg:grid-cols-12 lg:gap-16">
+                        <div class="lg:col-span-4">
+                            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-orange-600">Portfólio</p>
+                            <h2 class="mt-4 text-4xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-5xl">
+                                Marcas que fazem parte da nossa atuação.
+                            </h2>
+                        </div>
+                        <div class="lg:col-span-8 lg:pt-2">
+                            <p class="max-w-2xl text-base leading-8 text-slate-600">
+                                Um espaço dedicado aos parceiros e fabricantes representados pela Jeliel. Os logotipos
+                                abaixo podem ser substituídos pelos arquivos oficiais do portfólio.
+                            </p>
+
+                            <div class="mt-12 grid grid-cols-2 border-l border-t border-slate-900/10 sm:grid-cols-4">
+                                <template x-for="brand in brands" :key="brand.name">
+                                    <div
+                                        class="flex min-h-32 items-center justify-center border-b border-r border-slate-900/10 px-5 py-8 text-center transition hover:bg-stone-50"
+                                    >
+                                        <div>
+                                            <p
+                                                class="text-xl font-semibold tracking-tight text-slate-800"
+                                                x-text="brand.name"
+                                            ></p>
+                                            <p
+                                                class="mt-2 text-xs uppercase tracking-[0.15em] text-slate-400"
+                                                x-text="brand.category"
+                                            ></p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="categorias" class="scroll-mt-20 border-y border-slate-900/10 bg-stone-50 py-24 sm:py-28">
+                <div class="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+                    <div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+                        <div class="max-w-2xl">
+                            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-orange-600">Categorias</p>
+                            <h2 class="mt-4 text-4xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-5xl">
+                                Um portfólio pensado para o negócio musical.
+                            </h2>
+                        </div>
+                        <p class="max-w-md text-sm leading-7 text-slate-500 lg:text-right">
+                            Navegue pelos principais segmentos atendidos e encontre o espaço adequado para sua loja ou
+                            operação.
+                        </p>
+                    </div>
+
+                    <div class="mt-14 divide-y divide-slate-900/10 border-y border-slate-900/10">
+                        <template x-for="(category, index) in categories" :key="category.title">
+                            <div
+                                class="group grid gap-5 py-7 transition hover:px-4 hover:bg-white sm:grid-cols-12 sm:items-center sm:gap-8"
+                            >
+                                <p
+                                    class="text-xs font-semibold tracking-[0.2em] text-orange-600 sm:col-span-1"
+                                    x-text="String(index + 1).padStart(2, '0')"
+                                ></p>
+                                <h3
+                                    class="text-2xl font-semibold tracking-tight sm:col-span-4"
+                                    x-text="category.title"
+                                ></h3>
+                                <p
+                                    class="text-sm leading-7 text-slate-500 sm:col-span-6"
+                                    x-text="category.description"
+                                ></p>
+                                <span
+                                    class="text-xl text-slate-300 transition group-hover:translate-x-1 group-hover:text-orange-600 sm:col-span-1 sm:text-right"
+                                    aria-hidden="true"
+                                >
+                                    →
+                                </span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sobre" class="scroll-mt-20 bg-slate-950 py-24 text-white sm:py-28">
+                <div class="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+                    <div class="grid gap-16 lg:grid-cols-12 lg:gap-20">
+                        <div class="lg:col-span-5">
+                            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-orange-400">
+                                Sobre a Jeliel
+                            </p>
+                            <p
+                                class="mt-8 font-serif text-6xl font-medium italic tracking-tight text-white sm:text-7xl"
+                            >
+                                Luciana
+                            </p>
+                            <p class="mt-2 text-sm font-semibold uppercase tracking-[0.25em] text-slate-400">
+                                Representante
+                            </p>
+                        </div>
+
+                        <div class="lg:col-span-7 lg:pt-2">
+                            <p class="text-2xl font-medium leading-relaxed tracking-tight text-white sm:text-3xl">
+                                Mais do que apresentar produtos, a Jeliel constrói pontes entre marcas e pessoas.
+                            </p>
+                            <div class="mt-8 max-w-2xl space-y-5 text-base leading-8 text-slate-300">
+                                <p>
+                                    A atuação da Jeliel é baseada em proximidade, confiança e conhecimento do mercado. O
+                                    objetivo é facilitar o encontro entre bons produtos, fabricantes e lojistas.
+                                </p>
+                                <p>
+                                    Aqui, cada relacionamento comercial é tratado de forma próxima e objetiva,
+                                    respeitando as necessidades de cada negócio.
+                                </p>
+                            </div>
+
+                            <a
+                                href="#contato"
+                                class="mt-10 inline-flex items-center gap-3 border-b border-orange-400 pb-2 text-sm font-semibold text-white transition hover:text-orange-400"
+                            >
+                                Converse com a Luciana
+                                <span aria-hidden="true">↗</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="contato" class="scroll-mt-20 bg-white py-24 sm:py-28">
+                <div class="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+                    <div class="grid gap-16 lg:grid-cols-12 lg:gap-20">
+                        <div class="lg:col-span-5">
+                            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-orange-600">Contato</p>
+                            <h2 class="mt-4 text-4xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-5xl">
+                                Vamos conversar sobre o seu negócio.
+                            </h2>
+                            <p class="mt-6 max-w-md text-base leading-8 text-slate-600">
+                                Para informações sobre marcas, produtos ou representação comercial, envie uma mensagem.
+                            </p>
+
+                            <div class="mt-10 border-t border-slate-900/10 pt-8">
+                                <p class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">E-mail</p>
+                                <a
+                                    href="mailto:Luciana@jeliel.com.br"
+                                    class="mt-2 inline-block text-lg font-medium text-slate-900 transition hover:text-orange-600"
+                                >
+                                    Luciana@jeliel.com.br
+                                </a>
+
+                                <p class="mt-7 text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Site</p>
+                                <a
+                                    href="https://jeliel.com.br"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    class="mt-2 inline-block text-lg font-medium text-slate-900 transition hover:text-orange-600"
+                                >
+                                    jeliel.com.br ↗
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="lg:col-span-7">
+                            <form class="border-t border-slate-900/10 pt-2" @submit.prevent="submitContact" novalidate>
+                                <div class="grid gap-8 sm:grid-cols-2">
+                                    <div>
+                                        <label for="name" class="text-sm font-semibold text-slate-800">Nome</label>
+                                        <input
+                                            id="name"
+                                            name="name"
+                                            type="text"
+                                            autocomplete="name"
+                                            required
+                                            class="mt-3 w-full border-0 border-b border-slate-300 bg-transparent px-0 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-orange-600 focus:ring-0"
+                                            placeholder="Seu nome"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label for="company" class="text-sm font-semibold text-slate-800">
+                                            Empresa
+                                        </label>
+                                        <input
+                                            id="company"
+                                            name="company"
+                                            type="text"
+                                            autocomplete="organization"
+                                            required
+                                            class="mt-3 w-full border-0 border-b border-slate-300 bg-transparent px-0 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-orange-600 focus:ring-0"
+                                            placeholder="Nome da empresa"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="mt-8">
+                                    <label for="cnpj" class="text-sm font-semibold text-slate-800">
+                                        CNPJ
+                                        <span class="font-normal text-slate-400">(opcional)</span>
+                                    </label>
+                                    <input
+                                        id="cnpj"
+                                        name="cnpj"
+                                        type="text"
+                                        inputmode="numeric"
+                                        class="mt-3 w-full border-0 border-b border-slate-300 bg-transparent px-0 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-orange-600 focus:ring-0"
+                                        placeholder="00.000.000/0000-00"
+                                    />
+                                </div>
+
+                                <div class="mt-8">
+                                    <label for="message" class="text-sm font-semibold text-slate-800">Mensagem</label>
+                                    <textarea
+                                        id="message"
+                                        name="message"
+                                        rows="5"
+                                        required
+                                        class="mt-3 w-full resize-none border-0 border-b border-slate-300 bg-transparent px-0 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-orange-600 focus:ring-0"
+                                        placeholder="Como podemos ajudar?"
+                                    ></textarea>
+                                </div>
+
+                                <div class="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <p class="text-xs leading-5 text-slate-400">
+                                        Ao enviar, seu cliente de e-mail será aberto com a mensagem preparada.
+                                    </p>
+                                    <button
+                                        type="submit"
+                                        class="inline-flex items-center justify-center gap-3 rounded-full bg-orange-600 px-7 py-3.5 text-sm font-semibold text-white transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-600 focus:ring-offset-2"
+                                    >
+                                        Enviar mensagem
+                                        <span aria-hidden="true">→</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="border-t border-slate-900/10 bg-stone-50">
+            <div
+                class="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-8 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-10"
+            >
+                <div class="flex items-center gap-4">
+                    <img src="./logo-jeliel.png" alt="Jeliel Representações" class="h-10 w-auto" />
+                    <p class="text-xs text-slate-500">Representação comercial · Mercado musical</p>
+                </div>
+                <p class="text-xs text-slate-400">
+                    ©
+                    <span x-text="currentYear"></span>
+                    Jeliel Representações. Todos os direitos reservados.
+                </p>
+            </div>
+        </footer>
+
+        <script>
+            function jelielSite() {
+                const brands = [
+                    { name: 'MARCA 01', category: 'Áudio' },
+                    { name: 'MARCA 02', category: 'Instrumentos' },
+                    { name: 'MARCA 03', category: 'Acessórios' },
+                    { name: 'MARCA 04', category: 'Percussão' },
+                    { name: 'MARCA 05', category: 'Áudio' },
+                    { name: 'MARCA 06', category: 'Instrumentos' },
+                    { name: 'MARCA 07', category: 'Acessórios' },
+                    { name: 'MARCA 08', category: 'Equipamentos' },
+                ];
+
+                const categories = [
+                    {
+                        title: 'Instrumentos de corda',
+                        description: 'Violões, guitarras, baixos e produtos relacionados ao universo de cordas.',
+                    },
+                    {
+                        title: 'Áudio profissional',
+                        description: 'Equipamentos e soluções para sonorização, gravação e performance.',
+                    },
+                    {
+                        title: 'Percussão',
+                        description: 'Instrumentos e acessórios para músicos, escolas e lojas especializadas.',
+                    },
+                    {
+                        title: 'Acessórios',
+                        description: 'Itens complementares que ampliam o portfólio e as oportunidades de venda.',
+                    },
+                ];
+
+                return {
+                    brands,
+                    categories,
+                    currentYear: new Date().getFullYear(),
+                    isMenuOpen: false,
+
+                    toggleMenu() {
+                        this.isMenuOpen = !this.isMenuOpen;
+                    },
+
+                    closeMenu() {
+                        this.isMenuOpen = false;
+                    },
+
+                    submitContact(event) {
+                        const form = event.currentTarget;
+
+                        if (!form.checkValidity()) {
+                            form.reportValidity();
+                            return;
+                        }
+
+                        const formData = new FormData(form);
+                        const name = formData.get('name');
+                        const company = formData.get('company');
+                        const cnpj = formData.get('cnpj');
+                        const message = formData.get('message');
+                        const subject = `Contato comercial — ${company}`;
+                        const body = [
+                            `Nome: ${name}`,
+                            `Empresa: ${company}`,
+                            `CNPJ: ${cnpj || 'Não informado'}`,
+                            '',
+                            'Mensagem:',
+                            message,
+                        ].join('\n');
+
+                        window.location.href = `mailto:Luciana@jeliel.com.br?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    },
+                };
+            }
+        </script>
+    </body>
+</html>

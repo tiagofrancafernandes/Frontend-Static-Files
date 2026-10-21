@@ -10,6 +10,7 @@ const IGNORED_DIRS = new Set([
     '.dist',
     '.output',
     '.vite',
+    '.vercel',
     '.git',
     '.idea',
     '.vscode',
@@ -66,11 +67,21 @@ function copyStaticNonHtmlFiles(srcDir: string, destDir: string) {
 }
 
 /**
- * Custom Vite plugin to preserve static directory assets and inject pages list.
+ * Custom Vite plugin to preserve static directory assets, inject pages list,
+ * and provide a real-time `/api/pages` endpoint in dev server mode.
  */
 function staticDirectoryPlugin(): Plugin {
     return {
         name: 'vite-plugin-static-directory',
+        configureServer(server) {
+            server.middlewares.use('/api/pages', (_req, res) => {
+                const pages = getHtmlFiles(ROOT_DIR)
+                    .filter((p) => p !== 'index.html')
+                    .sort();
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify(pages));
+            });
+        },
         transformIndexHtml(html, ctx) {
             const isRootIndex =
                 ctx.path === '/' ||
