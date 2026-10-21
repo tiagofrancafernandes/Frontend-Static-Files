@@ -12,6 +12,7 @@ function validatePassword(input) {
 }
 
 let allRawPages = [];
+let configuredBase = '';
 let activeBase = '';
 let isFlatView = false;
 let expandedFolders = new Set();
@@ -110,6 +111,20 @@ function getAbsoluteUrl(relPath) {
     return new URL(`/${clean}`, window.location.origin).href;
 }
 
+function getDisplayPath(fullPath) {
+    if (!isAuthenticated() && !isDefaultBase(configuredBase)) {
+        const prefix = `files/${configuredBase}/`;
+        if (fullPath.startsWith(prefix)) {
+            const baseName = configuredBase.split('/').pop();
+            return `${baseName}/${fullPath.slice(prefix.length)}`;
+        }
+        if (fullPath === `files/${configuredBase}`) {
+            return configuredBase.split('/').pop();
+        }
+    }
+    return fullPath;
+}
+
 // Build hierarchical node
 function buildFolderTree(fileList, baseDir = '') {
     const normBase = normalizePath(baseDir);
@@ -204,7 +219,7 @@ function renderFolderNodeHtml(node, depth = 0) {
                     <iconify-icon icon="fa7-solid:file-code" class="file-icon"></iconify-icon>
                     <div class="file-meta">
                         <div class="file-title">${escapeHtml(file.name)}</div>
-                        <div class="file-path">${escapeHtml(file.fullPath)}</div>
+                        <div class="file-path">${escapeHtml(getDisplayPath(file.fullPath))}</div>
                     </div>
                 </div>
                 <div class="file-actions">
@@ -243,6 +258,44 @@ function renderFolderNodeHtml(node, depth = 0) {
 
 // Render breadcrumbs
 function renderBreadcrumbs() {
+    // Hide navigation before set base when not authenticated with session password
+    const hideParentNavigation = !isAuthenticated() && !isDefaultBase(configuredBase);
+
+    if (hideParentNavigation) {
+        const baseName = configuredBase.split('/').pop() || configuredBase;
+        let subPath = '';
+        if (activeBase.startsWith(configuredBase)) {
+            subPath = normalizePath(activeBase.slice(configuredBase.length));
+        }
+
+        const subParts = subPath ? subPath.split('/') : [];
+        const isAtBase = subParts.length === 0;
+
+        let html = `
+            <span class="crumb-item ${isAtBase ? 'current' : ''}" data-crumb="${escapeHtml(configuredBase)}">
+                <iconify-icon icon="fa7-solid:house"></iconify-icon>
+                <span>${escapeHtml(baseName)}</span>
+            </span>
+        `;
+
+        let acc = configuredBase;
+        for (let i = 0; i < subParts.length; i++) {
+            const part = subParts[i];
+            acc = `${acc}/${part}`;
+            const isLast = i === subParts.length - 1;
+            html += `
+                <span class="crumb-separator">/</span>
+                <span class="crumb-item ${isLast ? 'current' : ''}" data-crumb="${escapeHtml(acc)}">
+                    <span>${escapeHtml(part)}</span>
+                </span>
+            `;
+        }
+
+        breadcrumbsEl.innerHTML = html;
+        return;
+    }
+
+    // Default base or Authenticated: show full navigation from 'files'
     const parts = activeBase ? activeBase.split('/') : [];
     let html = `
         <span class="crumb-item ${parts.length === 0 ? 'current' : ''}" data-crumb="">
@@ -295,7 +348,7 @@ function renderFlatView(files) {
                 <div class="flat-folder-header">
                     <div class="flat-folder-title">
                         <iconify-icon icon="fa7-solid:folder-open"></iconify-icon>
-                        <span>${escapeHtml(dir)}</span>
+                        <span>${escapeHtml(getDisplayPath(dir))}</span>
                         <span class="folder-stats-pill">${dirFiles.length} ${dirFiles.length === 1 ? 'item' : 'itens'}</span>
                     </div>
                     <button
@@ -320,7 +373,7 @@ function renderFlatView(files) {
                                     <iconify-icon icon="fa7-solid:file-code" class="file-icon"></iconify-icon>
                                     <div class="file-meta">
                                         <div class="file-title">${escapeHtml(fileName)}</div>
-                                        <div class="file-path">${escapeHtml(file)}</div>
+                                        <div class="file-path">${escapeHtml(getDisplayPath(file))}</div>
                                     </div>
                                 </div>
                                 <div class="file-actions">
@@ -391,10 +444,14 @@ function render() {
     const tree = buildFolderTree(allRawPages, activeBase);
 
     if (tree.childDirs.size === 0 && tree.directFiles.length === 0) {
+        const emptyLabel =
+            !isAuthenticated() && !isDefaultBase(configuredBase)
+                ? configuredBase.split('/').pop() || configuredBase
+                : activeBase || 'files';
         indexContentEl.innerHTML = `
             <div class="empty-state">
                 <iconify-icon icon="fa7-solid:folder-open" class="empty-icon"></iconify-icon>
-                <p>Nenhum arquivo ou subpasta encontrado em <strong>${escapeHtml(activeBase || 'files')}</strong>.</p>
+                <p>Nenhum arquivo ou subpasta encontrado em <strong>${escapeHtml(emptyLabel)}</strong>.</p>
             </div>
         `;
         return;
@@ -417,7 +474,7 @@ function render() {
                     <iconify-icon icon="fa7-solid:file-code" class="file-icon"></iconify-icon>
                     <div class="file-meta">
                         <div class="file-title">${escapeHtml(file.name)}</div>
-                        <div class="file-path">${escapeHtml(file.fullPath)}</div>
+                        <div class="file-path">${escapeHtml(getDisplayPath(file.fullPath))}</div>
                     </div>
                 </div>
                 <div class="file-actions">
@@ -467,7 +524,12 @@ function updateShareUrlPreview() {
 
 function openShareModal(folderPath) {
     currentSharingFolder = normalizePath(folderPath);
-    shareFolderPathInput.value = currentSharingFolder ? `files/${currentSharingFolder}` : 'files';
+    shareFolderPathInput.value =
+        !isAuthenticated() && !isDefaultBase(configuredBase)
+            ? getDisplayPath(`files/${currentSharingFolder}`)
+            : currentSharingFolder
+              ? `files/${currentSharingFolder}`
+              : 'files';
     shareOptSetbase.checked = false;
     shareOptFolder.checked = true;
     updateShareUrlPreview();
@@ -608,15 +670,18 @@ function checkInitialAccess() {
 
     if (reqBase !== null) {
         if (!isDefaultBase(reqBase) && folderExists(normBase)) {
+            configuredBase = normBase;
             activeBase = normBase;
             isCustomBase = true;
             localStorage.setItem('saved_base_folder', activeBase);
         } else {
             // Explicitly set to empty/default: remove from localStorage
+            configuredBase = '';
             activeBase = '';
             localStorage.removeItem('saved_base_folder');
         }
     } else if (reqFolder !== null && !isDefaultBase(reqFolder) && folderExists(normFolder)) {
+        configuredBase = normFolder;
         activeBase = normFolder;
         isCustomBase = true;
         localStorage.setItem('saved_base_folder', activeBase);
@@ -625,9 +690,11 @@ function checkInitialAccess() {
         const savedBase = localStorage.getItem('saved_base_folder');
         const normSaved = normalizePath(savedBase);
         if (normSaved && !isDefaultBase(normSaved) && folderExists(normSaved)) {
+            configuredBase = normSaved;
             activeBase = normSaved;
             isCustomBase = true;
         } else {
+            configuredBase = '';
             activeBase = '';
             localStorage.removeItem('saved_base_folder');
         }
@@ -636,15 +703,25 @@ function checkInitialAccess() {
     // If custom base active, show base indicator in header and sync URL
     if (isCustomBase) {
         baseIndicatorEl.style.display = 'flex';
-        currentBaseNameEl.textContent = `files/${activeBase}`;
+        currentBaseNameEl.textContent = isAuthenticated()
+            ? `files/${activeBase}`
+            : configuredBase.split('/').pop() || activeBase;
 
         const currentUrl = new URL(window.location.href);
         if (currentUrl.searchParams.get('set_base') !== activeBase) {
             currentUrl.searchParams.set('set_base', activeBase);
             window.history.replaceState({}, '', currentUrl.href);
         }
+
+        if (!isAuthenticated()) {
+            const baseName = configuredBase.split('/').pop() || configuredBase;
+            searchInput.placeholder = `Buscar arquivos em ${baseName}/...`;
+        } else {
+            searchInput.placeholder = 'Buscar arquivos em files/...';
+        }
     } else {
         baseIndicatorEl.style.display = 'none';
+        searchInput.placeholder = 'Buscar arquivos em files/...';
     }
 
     // If non-default base: NO PASSWORD REQUIRED!
@@ -674,6 +751,10 @@ authForm.addEventListener('submit', (e) => {
         setAuthenticated();
         authOverlay.classList.remove('show');
         authErrorMsg.style.display = 'none';
+        if (activeBase && !isDefaultBase(activeBase)) {
+            currentBaseNameEl.textContent = `files/${activeBase}`;
+        }
+        searchInput.placeholder = 'Buscar arquivos em files/...';
         render();
     } else {
         authErrorMsg.style.display = 'block';
@@ -743,6 +824,14 @@ breadcrumbsEl.addEventListener('click', (e) => {
     const crumb = e.target.closest('[data-crumb]');
     if (crumb && !crumb.classList.contains('current')) {
         const targetPath = crumb.getAttribute('data-crumb');
+
+        // Prevent navigating above configured base when not authenticated with session password
+        if (!isAuthenticated() && !isDefaultBase(configuredBase)) {
+            if (targetPath !== configuredBase && !targetPath.startsWith(`${configuredBase}/`)) {
+                return;
+            }
+        }
+
         activeBase = targetPath;
         if (activeBase && !isDefaultBase(activeBase)) {
             localStorage.setItem('saved_base_folder', activeBase);
@@ -750,7 +839,9 @@ breadcrumbsEl.addEventListener('click', (e) => {
             currentUrl.searchParams.set('set_base', activeBase);
             window.history.replaceState({}, '', currentUrl.href);
             baseIndicatorEl.style.display = 'flex';
-            currentBaseNameEl.textContent = `files/${activeBase}`;
+            currentBaseNameEl.textContent = isAuthenticated()
+                ? `files/${activeBase}`
+                : configuredBase.split('/').pop() || activeBase;
         } else {
             localStorage.removeItem('saved_base_folder');
             const currentUrl = new URL(window.location.href);
