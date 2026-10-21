@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        <title>Authentication</title>
+
+        <!-- TailwindCSS v4 -->
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+        <!-- Alpine.js -->
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+        <style>
+            [x-cloak] {
+                display: none !important;
+            }
+        </style>
+    </head>
+
+    <body class="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
+        <div x-data="auth()" class="min-h-screen flex flex-col md:flex-row">
+            <!-- =========================================================
+         LEFT / AUTHENTICATION
+         ========================================================= -->
+
+            <main
+                class="w-full min-h-screen flex flex-col border-b md:border-b-0 border-zinc-800/80 bg-zinc-950 transition-[width] duration-300"
+                :class="rightPanel === 'hidden'
+            ? 'md:w-full'
+            : 'md:w-5/8 md:border-r'"
+            >
+                <!-- Header -->
+
+                <header class="px-6 py-5 md:px-10">
+                    <a href="#" class="inline-flex items-center gap-2 text-sm font-medium tracking-tight">
+                        <span
+                            class="flex h-6 w-6 items-center justify-center rounded-sm bg-white text-zinc-950 text-[10px] font-bold"
+                        >
+                            A
+                        </span>
+
+                        <span class="text-zinc-200">Acme</span>
+                    </a>
+                </header>
+
+                <!-- Authentication container -->
+
+                <div class="flex flex-1 items-center justify-center px-6 py-12 md:px-12 lg:px-20">
+                    <div class="w-full max-w-sm">
+                        <!-- =================================================
+                     LOGIN
+                     ================================================= -->
+
+                        <section x-show="view === 'login'" x-cloak>
+                            <template x-if="loginState === 'form'">
+                                <div>
+                                    <div class="mb-8">
+                                        <h1 class="text-xl font-light tracking-tight text-zinc-100">
+                                            Bem-vindo de volta
+                                        </h1>
+
+                                        <p class="mt-2 text-xs font-light text-zinc-500">
+                                            Entre na sua conta para continuar.
+                                        </p>
+                                    </div>
+
+                                    <!-- OAuth -->
+
+                                    <button
+                                        type="button"
+                                        class="flex h-9 w-full items-center justify-center gap-2 rounded-sm border border-zinc-800 bg-zinc-900/50 text-xs font-light text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-900 focus:outline-none focus:ring-0"
+                                    >
+                                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                            <path
+                                                d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.09.682-.217.682-.482 0-.237-.009-.866-.014-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.091-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.748-1.025 2.748-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.576.688.479A10.001 10.001 0 0 0 22 12c0-5.523-4.477-10-10-10Z"
+                                            />
+                                        </svg>
+
+                                        Continuar com GitHub
+                                    </button>
+
+                                    <!-- Divider -->
+
+                                    <div class="my-6 flex items-center gap-3">
+                                        <div class="h-px flex-1 bg-zinc-800"></div>
+
+                                        <span class="text-[10px] font-light text-zinc-600">OU</span>
+
+                                        <div class="h-px flex-1 bg-zinc-800"></div>
+                                    </div>
+
+                                    <!-- Login -->
+
+                                    <form @submit.prevent="login" class="space-y-4">
+                                        <div>
+                                            <label
+                                                for="login-email"
+                                                class="mb-1.5 block text-[11px] font-light text-zinc-400"
+                                            >
+                                                E-mail
+                                            </label>
+
+                                            <input
+                                                id="login-email"
+                                                x-model="loginForm.email"
+                                                type="email"
+                                                required
+                                                placeholder="voce@exemplo.com"
+                                                class="h-9 w-full rounded-sm border border-zinc-800 bg-zinc-900/40 px-3 text-xs font-light text-zinc-200 placeholder:text-zinc-700 outline-none ring-0 transition focus:border-zinc-600 focus:ring-0"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <div class="mb-1.5 flex items-center justify-between">
+                                                <label
+                                                    for="login-password"
+                                                    class="text-[11px] font-light text-zinc-400"
+                                                >
+                                                    Senha
+                                                </label>
+
+                                                <button
+                                                    type="button"
+                                                    @click="view = 'forgot'; forgotState = 'form'"
+                                                    class="text-[10px] font-light text-zinc-500 hover:text-zinc-300"
+                                                >
+                                                    Esqueci minha senha
+                                                </button>
+                                            </div>
+
+                                            <input
+                                                id="login-password"
+                                                x-model="loginForm.password"
+                                                type="password"
+                                                required
+                                                placeholder="••••••••"
+                                                class="h-9 w-full rounded-sm border border-zinc-800 bg-zinc-900/40 px-3 text-xs font-light text-zinc-200 placeholder:text-zinc-700 outline-none ring-0 transition focus:border-zinc-600 focus:ring-0"
+                                            />
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            class="mt-2 flex h-9 w-full items-center justify-center rounded-sm border border-zinc-100 bg-zinc-100 text-xs font-medium text-zinc-950 transition hover:bg-white focus:outline-none focus:ring-0"
+                                        >
+                                            Entrar
+                                        </button>
+                                    </form>
+
+                                    <p class="mt-7 text-center text-[11px] font-light text-zinc-600">
+                                        Ainda não possui uma conta?
+
+                                        <button
+                                            type="button"
+                                            @click="view = 'register'; registerState = 'form'"
+                                            class="text-zinc-400 hover:text-zinc-200"
+                                        >
+                                            Criar conta
+                                        </button>
+                                    </p>
+                                </div>
+                            </template>
+
+                            <!-- Login success -->
+
+                            <template x-if="loginState === 'success'">
+                                <div class="text-center">
+                                    <div
+                                        class="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-sm border border-zinc-700 bg-zinc-900 text-zinc-300"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.5"
+                                        >
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6" />
+                                        </svg>
+                                    </div>
+
+                                    <h1 class="text-xl font-light tracking-tight text-zinc-100">Login realizado</h1>
+
+                                    <p class="mt-3 text-xs font-light leading-5 text-zinc-500">
+                                        Seus dados foram aceitos e sua sessão está pronta para continuar.
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        @click="loginState = 'form'"
+                                        class="mt-7 text-[10px] font-light text-zinc-500 hover:text-zinc-300"
+                                    >
+                                        Voltar
+                                    </button>
+                                </div>
+                            </template>
+                        </section>
+
+                        <!-- =================================================
+                     REGISTER
+                     ================================================= -->
+
+                        <section x-show="view === 'register'" x-cloak>
+                            <template x-if="registerState === 'form'">
+                                <div>
+                                    <div class="mb-8">
+                                        <h1 class="text-xl font-light tracking-tight text-zinc-100">Criar sua conta</h1>
+
+                                        <p class="mt-2 text-xs font-light text-zinc-500">
+                                            Crie uma conta para começar.
+                                        </p>
+                                    </div>
+
+                                    <form @submit.prevent="register" class="space-y-4">
+                                        <div>
+                                            <label
+                                                for="register-name"
+                                                class="mb-1.5 block text-[11px] font-light text-zinc-400"
+                                            >
+                                                Nome
+                                            </label>
+
+                                            <input
+                                                id="register-name"
+                                                x-model="registerForm.name"
+                                                type="text"
+                                                required
+                                                placeholder="Seu nome"
+                                                class="h-9 w-full rounded-sm border border-zinc-800 bg-zinc-900/40 px-3 text-xs font-light text-zinc-200 outline-none ring-0 placeholder:text-zinc-700 focus:border-zinc-600 focus:ring-0"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label
+                                                for="register-email"
+                                                class="mb-1.5 block text-[11px] font-light text-zinc-400"
+                                            >
+                                                E-mail
+                                            </label>
+
+                                            <input
+                                                id="register-email"
+                                                x-model="registerForm.email"
+                                                type="email"
+                                                required
+                                                placeholder="voce@exemplo.com"
+                                                class="h-9 w-full rounded-sm border border-zinc-800 bg-zinc-900/40 px-3 text-xs font-light text-zinc-200 outline-none ring-0 placeholder:text-zinc-700 focus:border-zinc-600 focus:ring-0"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label
+                                                for="register-password"
+                                                class="mb-1.5 block text-[11px] font-light text-zinc-400"
+                                            >
+                                                Senha
+                                            </label>
+
+                                            <input
+                                                id="register-password"
+                                                x-model="registerForm.password"
+                                                type="password"
+                                                required
+                                                placeholder="Mínimo de 8 caracteres"
+                                                class="h-9 w-full rounded-sm border border-zinc-800 bg-zinc-900/40 px-3 text-xs font-light text-zinc-200 outline-none ring-0 placeholder:text-zinc-700 focus:border-zinc-600 focus:ring-0"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label
+                                                for="register-password-confirmation"
+                                                class="mb-1.5 block text-[11px] font-light text-zinc-400"
+                                            >
+                                                Confirmar senha
+                                            </label>
+
+                                            <input
+                                                id="register-password-confirmation"
+                                                x-model="registerForm.passwordConfirmation"
+                                                type="password"
+                                                required
+                                                placeholder="Repita sua senha"
+                                                class="h-9 w-full rounded-sm border border-zinc-800 bg-zinc-900/40 px-3 text-xs font-light text-zinc-200 outline-none ring-0 placeholder:text-zinc-700 focus:border-zinc-600 focus:ring-0"
+                                            />
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            class="mt-2 flex h-9 w-full items-center justify-center rounded-sm border border-zinc-100 bg-zinc-100 text-xs font-medium text-zinc-950 hover:bg-white focus:outline-none focus:ring-0"
+                                        >
+                                            Criar conta
+                                        </button>
+                                    </form>
+
+                                    <p class="mt-7 text-center text-[11px] font-light text-zinc-600">
+                                        Já possui uma conta?
+
+                                        <button
+                                            type="button"
+                                            @click="view = 'login'; loginState = 'form'"
+                                            class="text-zinc-400 hover:text-zinc-200"
+                                        >
+                                            Entrar
+                                        </button>
+                                    </p>
+                                </div>
+                            </template>
+
+                            <!-- Register success -->
+
+                            <template x-if="registerState === 'success'">
+                                <div class="text-center">
+                                    <div
+                                        class="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-sm border border-zinc-700 bg-zinc-900 text-zinc-300"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.5"
+                                        >
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6" />
+                                        </svg>
+                                    </div>
+
+                                    <h1 class="text-xl font-light tracking-tight text-zinc-100">Conta criada</h1>
+
+                                    <p class="mt-3 text-xs font-light leading-5 text-zinc-500">
+                                        Sua conta foi criada com sucesso. Você já pode continuar utilizando a
+                                        plataforma.
+                                    </p>
+
+                                    <button
+                                        type="button"
+                                        @click="view = 'login'; loginState = 'form'"
+                                        class="mt-7 text-[10px] font-light text-zinc-500 hover:text-zinc-300"
+                                    >
+                                        Ir para o login
+                                    </button>
+                                </div>
+                            </template>
+                        </section>
+
+                        <!-- =================================================
+                     FORGOT PASSWORD
+                     ================================================= -->
+
+                        <section x-show="view === 'forgot'" x-cloak>
+                            <!-- Recovery form -->
+
+                            <template x-if="forgotState === 'form'">
+                                <div>
+                                    <div class="mb-8">
+                                        <h1 class="text-xl font-light tracking-tight text-zinc-100">
+                                            Recuperar acesso
+                                        </h1>
+
+                                        <p class="mt-2 text-xs font-light text-zinc-500">
+                                            Enviaremos um código para redefinir seu acesso.
+                                        </p>
+                                    </div>
+
+                                    <form @submit.prevent="sendRecoveryCode" class="space-y-4">
+                                        <div>
+                                            <label
+                                                for="forgot-email"
+                                                class="mb-1.5 block text-[11px] font-light text-zinc-400"
+                                            >
+                                                E-mail
+                                            </label>
+
+                                            <input
+                                                id="forgot-email"
+                                                x-model="forgotForm.email"
+                                                type="email"
+                                                required
+                                                placeholder="voce@exemplo.com"
+                                                class="h-9 w-full rounded-sm border border-zinc-800 bg-zinc-900/40 px-3 text-xs font-light text-zinc-200 outline-none ring-0 placeholder:text-zinc-700 focus:border-zinc-600 focus:ring-0"
+                                            />
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            class="mt-2 flex h-9 w-full items-center justify-center rounded-sm border border-zinc-100 bg-zinc-100 text-xs font-medium text-zinc-950 hover:bg-white focus:outline-none focus:ring-0"
+                                        >
+                                            Enviar código
+                                        </button>
+                                    </form>
+
+                                    <p class="mt-7 text-center text-[11px] font-light text-zinc-600">
+                                        <button
+                                            type="button"
+                                            @click="view = 'login'; loginState = 'form'"
+                                            class="text-zinc-400 hover:text-zinc-200"
+                                        >
+                                            Voltar para o login
+                                        </button>
+                                    </p>
+                                </div>
+                            </template>
+
+                            <!-- Recovery sent -->
+
+                            <template x-if="forgotState === 'sent'">
+                                <div>
+                                    <div
+                                        class="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-sm border border-zinc-700 bg-zinc-900 text-zinc-300"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.5"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Z"
+                                            />
+
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m22 6-10 7L2 6" />
+                                        </svg>
+                                    </div>
+
+                                    <h1 class="text-xl font-light tracking-tight text-zinc-100">
+                                        Verifique seu e-mail
+                                    </h1>
+
+                                    <p class="mt-3 text-xs font-light leading-5 text-zinc-500">
+                                        Se o endereço informado estiver correto, um e-mail com um código para
+                                        recuperação de acesso será enviado para
+
+                                        <span class="text-zinc-300" x-text="forgotForm.email"></span>
+                                        .
+                                    </p>
+
+                                    <div class="mt-6">
+                                        <button
+                                            type="button"
+                                            @click="openCodeForm"
+                                            class="text-[11px] font-light text-zinc-400 underline underline-offset-4 decoration-zinc-700 hover:text-zinc-200"
+                                        >
+                                            Informar código
+                                        </button>
+                                    </div>
+
+                                    <p class="mt-7 text-center text-[11px] font-light text-zinc-600">
+                                        <button
+                                            type="button"
+                                            @click="forgotState = 'form'"
+                                            class="text-zinc-400 hover:text-zinc-200"
+                                        >
+                                            Usar outro e-mail
+                                        </button>
+                                    </p>
+                                </div>
+                            </template>
+
+                            <!-- Recovery code -->
+
+                            <template x-if="forgotState === 'code'">
+                                <div>
+                                    <div class="mb-8">
+                                        <h1 class="text-xl font-light tracking-tight text-zinc-100">Informar código</h1>
+
+                                        <p class="mt-2 text-xs font-light text-zinc-500">
+                                            Digite o código de 4 números enviado para seu e-mail.
+                                        </p>
+                                    </div>
+
+                                    <template x-if="codeError">
+                                        <div class="mb-5 border border-red-900/60 bg-red-950/20 px-3 py-2.5">
+                                            <p class="text-[10px] font-light leading-4 text-red-400">
+                                                O código informado é inválido. Verifique os números e tente novamente.
+                                            </p>
+                                        </div>
+                                    </template>
+
+                                    <form @submit.prevent="confirmCode" class="space-y-6">
+                                        <div class="flex justify-center gap-2">
+                                            <template x-for="(digit, index) in code" :key="index">
+                                                <input
+                                                    type="text"
+                                                    inputmode="numeric"
+                                                    maxlength="1"
+                                                    autocomplete="one-time-code"
+                                                    :x-ref="'code-' + index"
+                                                    x-model="code[index]"
+                                                    @input="handleCodeInput(index, $event)"
+                                                    @keydown.backspace="handleCodeBackspace(index, $event)"
+                                                    @paste="handleCodePaste($event)"
+                                                    class="h-11 w-11 rounded-sm border border-zinc-800 bg-zinc-900/40 text-center text-sm font-light text-zinc-100 outline-none ring-0 transition focus:border-zinc-600 focus:ring-0"
+                                                />
+                                            </template>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            class="flex h-9 w-full items-center justify-center rounded-sm border border-zinc-100 bg-zinc-100 text-xs font-medium text-zinc-950 hover:bg-white focus:outline-none focus:ring-0"
+                                        >
+                                            Confirmar código
+                                        </button>
+                                    </form>
+
+                                    <p class="mt-7 text-center text-[11px] font-light text-zinc-600">
+                                        <button
+                                            type="button"
+                                            @click="forgotState = 'sent'; codeError = false"
+                                            class="text-zinc-400 hover:text-zinc-200"
+                                        >
+                                            Voltar
+                                        </button>
+                                    </p>
+                                </div>
+                            </template>
+
+                            <!-- Recovery success -->
+
+                            <template x-if="forgotState === 'success'">
+                                <div class="text-center">
+                                    <div
+                                        class="mx-auto mb-6 flex h-10 w-10 items-center justify-center rounded-sm border border-zinc-700 bg-zinc-900 text-zinc-300"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="1.5"
+                                        >
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6" />
+                                        </svg>
+                                    </div>
+
+                                    <h1 class="text-xl font-light tracking-tight text-zinc-100">Código confirmado</h1>
+
+                                    <p class="mt-3 text-xs font-light leading-5 text-zinc-500">
+                                        O código foi confirmado com sucesso. Seu acesso foi validado e você será
+                                        redirecionado para o login.
+                                    </p>
+
+                                    <p class="mt-5 text-[10px] font-light text-zinc-600">Retornando para o login...</p>
+                                </div>
+                            </template>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- =========================================================
+             FOOTER
+             ========================================================= -->
+
+                <footer class="px-6 py-5 md:px-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <!-- Copyright / links -->
+
+                    <div class="flex flex-wrap items-center gap-4 text-[10px] font-light text-zinc-600">
+                        <span>© 2026 Acme Inc.</span>
+
+                        <a href="#" class="hover:text-zinc-400">Termos</a>
+
+                        <a href="#" class="hover:text-zinc-400">Privacidade</a>
+
+                        <a href="#" class="hover:text-zinc-400">Suporte</a>
+                    </div>
+
+                    <!-- =====================================================
+                 RIGHT PANEL PREVIEW CONTROLS
+                 ===================================================== -->
+
+                    <div
+                        class="flex items-center self-start sm:self-auto rounded-sm border border-zinc-800/80 bg-zinc-900/30 p-0.5"
+                    >
+                        <!-- Hero -->
+
+                        <button
+                            type="button"
+                            title="Hero panel"
+                            @click="rightPanel = 'hero'"
+                            :class="rightPanel === 'hero'
+                        ? 'bg-zinc-800 text-zinc-300'
+                        : 'text-zinc-600 hover:text-zinc-400'"
+                            class="flex h-6 w-7 items-center justify-center rounded-sm transition focus:outline-none focus:ring-0"
+                        >
+                            <svg
+                                class="h-3 w-3"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                            >
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <path d="M8 15l3-3 2 2 3-4" />
+                            </svg>
+                        </button>
+
+                        <!-- Image -->
+
+                        <button
+                            type="button"
+                            title="Image panel"
+                            @click="rightPanel = 'image'"
+                            :class="rightPanel === 'image'
+                        ? 'bg-zinc-800 text-zinc-300'
+                        : 'text-zinc-600 hover:text-zinc-400'"
+                            class="flex h-6 w-7 items-center justify-center rounded-sm transition focus:outline-none focus:ring-0"
+                        >
+                            <svg
+                                class="h-3 w-3"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                            >
+                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <path d="m21 15-5-5L5 21" />
+                            </svg>
+                        </button>
+
+                        <!-- Full image -->
+
+                        <button
+                            type="button"
+                            title="Full image"
+                            @click="rightPanel = 'full-image'"
+                            :class="rightPanel === 'full-image'
+                        ? 'bg-zinc-800 text-zinc-300'
+                        : 'text-zinc-600 hover:text-zinc-400'"
+                            class="flex h-6 w-7 items-center justify-center rounded-sm transition focus:outline-none focus:ring-0"
+                        >
+                            <svg
+                                class="h-3 w-3"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                            >
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                                <path d="M16 3h3a2 2 0 0 1 2 2v3" />
+                                <path d="M8 21H5a2 2 0 0 1-2-2v-3" />
+                                <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+                            </svg>
+                        </button>
+
+                        <!-- Hidden -->
+
+                        <button
+                            type="button"
+                            title="Hide panel"
+                            @click="rightPanel = 'hidden'"
+                            :class="rightPanel === 'hidden'
+                        ? 'bg-zinc-800 text-zinc-300'
+                        : 'text-zinc-600 hover:text-zinc-400'"
+                            class="flex h-6 w-7 items-center justify-center rounded-sm transition focus:outline-none focus:ring-0"
+                        >
+                            <svg
+                                class="h-3 w-3"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                            >
+                                <path d="M18 6 6 18" />
+                                <path d="m6 6 12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </footer>
+            </main>
+
+            <!-- =========================================================
+         RIGHT / PROMOTIONAL PANEL
+         ========================================================= -->
+
+            <aside
+                x-show="rightPanel !== 'hidden'"
+                x-cloak
+                class="relative w-full md:w-3/8 min-h-[560px] md:min-h-screen overflow-hidden bg-zinc-900/40"
+            >
+                <!-- =====================================================
+             FULL IMAGE
+             ===================================================== -->
+
+                <template x-if="rightPanel === 'full-image'">
+                    <div class="absolute inset-0">
+                        <img
+                            src="https://fastly.picsum.photos/id/556/1500/2048.jpg?hmac=7AWknq4ZrgyY2bykEvkgiRAwPl0Zy2cVPDmHtl4Rg8E"
+                            alt=""
+                            class="h-full w-full object-cover"
+                        />
+
+                        <!-- Subtle overlay -->
+
+                        <div class="absolute inset-0 bg-zinc-950/10"></div>
+                    </div>
+                </template>
+
+                <!-- =====================================================
+             HERO / IMAGE MODE
+             ===================================================== -->
+
+                <template x-if="rightPanel !== 'full-image'">
+                    <div class="relative flex min-h-[560px] md:min-h-screen flex-col p-6 md:p-8">
+                        <!-- Decorative background -->
+
+                        <div class="absolute inset-0 pointer-events-none opacity-40">
+                            <div
+                                class="absolute -right-32 -top-32 h-80 w-80 rounded-full bg-white/[0.025] blur-3xl"
+                            ></div>
+
+                            <div
+                                class="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-zinc-500/[0.04] blur-3xl"
+                            ></div>
+                        </div>
+
+                        <!-- Top -->
+
+                        <div class="relative flex items-center justify-between">
+                            <span
+                                class="inline-flex items-center rounded-sm border border-zinc-800 bg-zinc-950/40 px-2 py-1 text-[9px] font-light uppercase tracking-widest text-zinc-500"
+                            >
+                                Novidade
+                            </span>
+
+                            <span class="text-[10px] font-light text-zinc-600">01 / 03</span>
+                        </div>
+
+                        <!-- =================================================
+                     HERO AREA
+                     ================================================= -->
+
+                        <div class="relative flex flex-1 flex-col items-center justify-center py-12 md:py-20">
+                            <!-- Image mode -->
+
+                            <template x-if="rightPanel === 'image'">
+                                <div
+                                    class="w-full max-w-xs overflow-hidden rounded-md border border-zinc-800 bg-zinc-950"
+                                >
+                                    <img
+                                        src="https://fastly.picsum.photos/id/556/1500/2048.jpg?hmac=7AWknq4ZrgyY2bykEvkgiRAwPl0Zy2cVPDmHtl4Rg8E"
+                                        alt=""
+                                        class="block aspect-[3/4] w-full object-cover"
+                                    />
+                                </div>
+                            </template>
+
+                            <!-- Hero mode -->
+
+                            <template x-if="rightPanel === 'hero'">
+                                <div class="flex flex-col items-center">
+                                    <!-- Hero visual -->
+
+                                    <div
+                                        class="mb-8 flex h-28 w-28 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 shadow-2xl"
+                                    >
+                                        <div
+                                            class="flex h-16 w-16 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900"
+                                        >
+                                            <div class="h-6 w-6 rounded-sm bg-zinc-100"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="max-w-xs text-center">
+                                        <h2 class="text-lg font-light tracking-tight text-zinc-200">
+                                            Tudo em um só lugar.
+                                        </h2>
+
+                                        <p class="mt-3 text-xs font-light leading-5 text-zinc-500">
+                                            Uma plataforma simples para gerenciar seus projetos, equipes e operações.
+                                        </p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <!-- =================================================
+                     BOTTOM INFORMATION
+                     ================================================= -->
+
+                        <div class="relative border-t border-zinc-800/80 pt-6">
+                            <div class="flex items-start justify-between gap-6">
+                                <div>
+                                    <p class="text-[10px] font-medium text-zinc-400">Workspace Pro</p>
+
+                                    <p class="mt-1 max-w-xs text-[10px] font-light leading-4 text-zinc-600">
+                                        Mais recursos, colaboração avançada e suporte prioritário para sua equipe.
+                                    </p>
+                                </div>
+
+                                <a href="#" class="shrink-0 text-[10px] font-light text-zinc-400 hover:text-zinc-200">
+                                    Saiba mais →
+                                </a>
+                            </div>
+
+                            <div class="mt-5 flex items-center gap-4">
+                                <a href="#" class="text-[10px] font-light text-zinc-600 hover:text-zinc-400">
+                                    Documentação
+                                </a>
+
+                                <a href="#" class="text-[10px] font-light text-zinc-600 hover:text-zinc-400">
+                                    Changelog
+                                </a>
+
+                                <a href="#" class="text-[10px] font-light text-zinc-600 hover:text-zinc-400">Status</a>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </aside>
+        </div>
+
+        <script>
+            function auth() {
+                return {
+                    view: 'login',
+
+                    /*
+                     * Right-side presentation:
+                     *
+                     * hero       = Hero + description + footer
+                     * image      = Image in hero area + footer
+                     * full-image = Image fills entire right panel
+                     * hidden     = Right panel is completely hidden
+                     */
+                    rightPanel: 'hero',
+
+                    loginState: 'form',
+                    registerState: 'form',
+                    forgotState: 'form',
+
+                    loginForm: {
+                        email: '',
+                        password: '',
+                    },
+
+                    registerForm: {
+                        name: '',
+                        email: '',
+                        password: '',
+                        passwordConfirmation: '',
+                    },
+
+                    forgotForm: {
+                        email: '',
+                    },
+
+                    code: ['', '', '', ''],
+                    codeError: false,
+
+                    login() {
+                        this.loginState = 'success';
+                    },
+
+                    register() {
+                        this.registerState = 'success';
+                    },
+
+                    sendRecoveryCode() {
+                        this.code = ['', '', '', ''];
+                        this.codeError = false;
+                        this.forgotState = 'sent';
+                    },
+
+                    openCodeForm() {
+                        this.code = ['', '', '', ''];
+                        this.codeError = false;
+                        this.forgotState = 'code';
+
+                        this.$nextTick(() => {
+                            this.$refs['code-0']?.focus();
+                        });
+                    },
+
+                    handleCodeInput(index, event) {
+                        const value = event.target.value.replace(/\D/g, '').slice(0, 1);
+
+                        this.code[index] = value;
+                        this.codeError = false;
+
+                        event.target.value = value;
+
+                        if (value && index < 3) {
+                            this.$nextTick(() => {
+                                this.$refs[`code-${index + 1}`]?.focus();
+                            });
+                        }
+                    },
+
+                    handleCodeBackspace(index, event) {
+                        if (event.key === 'Backspace' && !this.code[index] && index > 0) {
+                            this.$nextTick(() => {
+                                this.code[index - 1] = '';
+                                this.$refs[`code-${index - 1}`]?.focus();
+                            });
+                        }
+                    },
+
+                    handleCodePaste(event) {
+                        event.preventDefault();
+
+                        const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+
+                        if (!pasted) {
+                            return;
+                        }
+
+                        this.code = [pasted[0] || '', pasted[1] || '', pasted[2] || '', pasted[3] || ''];
+
+                        this.codeError = false;
+
+                        this.$nextTick(() => {
+                            const nextIndex = Math.min(pasted.length, 3);
+                            this.$refs[`code-${nextIndex}`]?.focus();
+                        });
+                    },
+
+                    confirmCode() {
+                        const enteredCode = this.code.join('');
+
+                        const validCodes = ['1234', '1111', '2222', '3333'];
+
+                        if (!validCodes.includes(enteredCode)) {
+                            this.codeError = true;
+                            return;
+                        }
+
+                        this.codeError = false;
+                        this.forgotState = 'success';
+
+                        setTimeout(() => {
+                            this.view = 'login';
+                            this.loginState = 'form';
+                            this.forgotState = 'form';
+                            this.code = ['', '', '', ''];
+                        }, 3000);
+                    },
+                };
+            }
+        </script>
+    </body>
+</html>

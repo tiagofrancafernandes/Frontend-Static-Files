@@ -1,0 +1,111 @@
+!.gitignore
+
+*.xlsx
+*.pptx
+*.docx
+*.pdf
+
+*.mp4
+*.webm
+*.avi
+
+*no*commit*
+*No*Commit*
+*NO*COMMIT*
+*.bkp.*
+*.bkp
+*.log
+*.swp
+*.out
+*.zip
+*.db
+*.sqlite
+*.tar
+*.tar.*
+*.tar.gz
+*.gz
+_ide_helper*
+*.bak
+*.bkp.*
+*.bkp
+*.log
+*.swp
+*.out
+*.zip
+*.del
+*.del.*
+_ide_helper*
+*.localonly.
+
+# Build outputs and temp directories
+.vite
+.vite/
+dist/
+dist*
+.dist
+.dist/
+.output
+.output/
+.vercel
+.vercel/
+.cache
+.cache/
+coverage/
+
+# Node.js
+node_modules/
+vendor/
+npm-debug.log
+package-lock.json
+yarn.lock
+
+.~lock.*
+
+/apps
+/clientes
+/tiago
+
+### documentos assinados
+!/all-docs/clientes/*/*assinado*.pdf
+!/all-docs/clientes/*/*assinado*.docx
+
+!*assinado*.pdf
+!/*/*assinado*.pdf
+!/*/*/*assinado*.pdf
+!*_assinado*.pdf
+!*_assinado*.docx
+!*-assinado*.pdf
+!*-assinado*.docx
+!*.assinado*.pdf
+!*.assinado*.docx
+
+### CV
+!/all-docs/*/documentos/curriculum/*/*.pdf
+# !all-docs/*/documentos/curriculum/Tech-Lead/CV*.pdf
+# !all-docs/*/documentos/curriculum/Developer/CV*.pdf
+
+### Exception for ignored type of files
+
+!all-docs/pessoais/docs-e-tutoriais/**/*.pdf
+!all-docs/pessoais/docs-e-tutoriais/**/*.docx
+!all-docs/pessoais/docs-e-tutoriais/**/*.docx
+
+### FINAL DO GITIGNORE
+
+##### KEEP FILES
+!.gitkeep
+!**/.gitkeep
+!**/**/.gitkeep
+!*gitkeep*
+*git-keep*
+!*keep-it*
+*nohup*.out*
+!*keepit*
+*commit-it*
+*commitit*
+
+#### FINAL IGNOREFILES
+*git-ignore*
+*no*commit*
+*No*Commit*
+*NO*COMMIT*
