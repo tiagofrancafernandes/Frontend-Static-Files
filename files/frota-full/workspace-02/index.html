@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frota Full - Desktop Workspace</title>
+
+  <!-- Tailwind CSS v4 CDN -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Iconify Web Component -->
+  <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+
+  <style>
+    /* Suporte suave a drag and drop visual e scrollbars discretas */
+    [x-cloak] { display: none !important; }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(24, 24, 27, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(63, 63, 70, 0.8);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(113, 113, 122, 1);
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 h-screen w-screen overflow-hidden select-none font-sans antialiased">
+
+  <div
+    x-data="fleetWorkspace()"
+    x-init="init()"
+    class="relative h-full w-full flex flex-col justify-between"
+    @click="closeAllMenus()"
+    x-cloak
+  >
+
+    <!-- 1. BARRA SUPERIOR ESTILO DESKTOP (Menu Bar com Dropdowns) -->
+    <header class="bg-zinc-900 border-b border-zinc-800 z-40 text-xs shadow-md">
+      <!-- Top Title and Controls Bar -->
+      <div class="h-9 px-3 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-900/90">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5 font-bold tracking-wider text-emerald-400">
+            <iconify-icon icon="lucide:truck" class="text-base"></iconify-icon>
+            <span>Frota<span class="text-zinc-400">Full</span></span>
+            <span class="ml-1 text-[10px] font-normal px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">v2.4 Pro</span>
+          </div>
+          <span class="text-zinc-700">|</span>
+          <span class="text-zinc-400 flex items-center gap-1">
+            <iconify-icon icon="lucide:building-2" class="text-zinc-500"></iconify-icon>
+            Filial: <strong class="text-zinc-200">Matriz Logística - BH</strong>
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Botão Modo de Edição -->
+          <button
+            type="button"
+            @click.stop="toggleEditMode()"
+            :class="isEditing ? 'bg-amber-500/20 text-amber-300 border-amber-500/60 ring-1 ring-amber-500/40' : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700 hover:text-white'"
+            class="px-2.5 py-1 rounded border transition-all flex items-center gap-1.5 cursor-pointer font-medium text-xs shadow-xs"
+          >
+            <iconify-icon :icon="isEditing ? 'lucide:check' : 'lucide:layout-grid'" class="text-sm"></iconify-icon>
+            <span x-text="isEditing ? 'Concluir Organização' : 'Editar Área de Trabalho'"></span>
+          </button>
+
+          <!-- Botão Adicionar Módulo (Catálogo) -->
+          <button
+            x-show="isEditing"
+            x-transition
+            type="button"
+            @click.stop="isCatalogOpen = true"
+            class="px-2.5 py-1 rounded border border-emerald-600 bg-emerald-950/60 text-emerald-300 hover:bg-emerald-900/80 transition-all cursor-pointer font-medium text-xs flex items-center gap-1.5 shadow-xs"
+          >
+            <iconify-icon icon="lucide:plus-circle" class="text-sm"></iconify-icon>
+            <span>Adicionar Módulos</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Menus Tradicionais de Aplicativo Desktop -->
+      <nav class="h-8 px-2 flex items-center gap-1 bg-zinc-900/70 select-none">
+        <!-- Menu Sistema -->
+        <div class="relative">
+          <button
+            type="button"
+            @click.stop="toggleMenu('sistema')"
+            :class="activeMenu === 'sistema' ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800/70 text-zinc-300'"
+            class="px-2.5 py-1 rounded text-xs transition cursor-pointer flex items-center gap-1"
+          >
+            <span>Sistema</span>
+          </button>
+          <div
+            x-show="activeMenu === 'sistema'"
+            x-transition:enter="transition ease-out duration-100"
+            x-transition:enter-start="opacity-0 -translate-y-1"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            class="absolute left-0 mt-1 w-56 rounded-lg bg-zinc-900 border border-zinc-700/80 shadow-2xl py-1.5 z-50 text-zinc-200"
+            @click.outside="closeAllMenus()"
+          >
+            <button @click="showNotice('Perfil & Preferências')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center justify-between">
+              <span class="flex items-center gap-2"><iconify-icon icon="lucide:user-cog"></iconify-icon> Preferências do Usuário</span>
+              <kbd class="text-[10px] text-zinc-500 font-mono">Ctrl+,</kbd>
+            </button>
+            <button @click="resetToDefaultWorkspace()" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2 text-amber-300">
+              <iconify-icon icon="lucide:rotate-ccw"></iconify-icon> Restaurar Grid Padrão
+            </button>
+            <div class="my-1 border-t border-zinc-800"></div>
+            <button @click="showNotice('Sessão Bloqueada')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2 text-zinc-400">
+              <iconify-icon icon="lucide:lock"></iconify-icon> Bloquear Estação
+            </button>
+            <button @click="showNotice('Encerrar Sistema')" class="w-full text-left px-3 py-1.5 hover:bg-rose-950/40 text-rose-400 flex items-center gap-2">
+              <iconify-icon icon="lucide:power"></iconify-icon> Sair do Sistema
+            </button>
+          </div>
+        </div>
+
+        <!-- Menu Operação -->
+        <div class="relative">
+          <button
+            type="button"
+            @click.stop="toggleMenu('operacao')"
+            :class="activeMenu === 'operacao' ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800/70 text-zinc-300'"
+            class="px-2.5 py-1 rounded text-xs transition cursor-pointer flex items-center gap-1"
+          >
+            <span>Operação</span>
+          </button>
+          <div
+            x-show="activeMenu === 'operacao'"
+            class="absolute left-0 mt-1 w-60 rounded-lg bg-zinc-900 border border-zinc-700/80 shadow-2xl py-1.5 z-50 text-zinc-200"
+            @click.outside="closeAllMenus()"
+          >
+            <button @click="showNotice('Lançamento Rápido de Saída')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:log-out" class="text-emerald-400"></iconify-icon> Registrar Saída de Viagem
+            </button>
+            <button @click="showNotice('Checklist de Chegada')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:check-square" class="text-blue-400"></iconify-icon> Checklist de Retorno
+            </button>
+            <button @click="showNotice('Apontamento de Combustível')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:fuel" class="text-amber-400"></iconify-icon> Lançamento de Abastecimento
+            </button>
+          </div>
+        </div>
+
+        <!-- Menu Frota -->
+        <div class="relative">
+          <button
+            type="button"
+            @click.stop="toggleMenu('frota')"
+            :class="activeMenu === 'frota' ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800/70 text-zinc-300'"
+            class="px-2.5 py-1 rounded text-xs transition cursor-pointer flex items-center gap-1"
+          >
+            <span>Frota</span>
+          </button>
+          <div
+            x-show="activeMenu === 'frota'"
+            class="absolute left-0 mt-1 w-56 rounded-lg bg-zinc-900 border border-zinc-700/80 shadow-2xl py-1.5 z-50 text-zinc-200"
+            @click.outside="closeAllMenus()"
+          >
+            <button @click="showNotice('Quadro Geral de Veículos')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:truck"></iconify-icon> Mapa de Disponibilidade
+            </button>
+            <button @click="showNotice('Controle de Pneus')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:disc"></iconify-icon> Eixos & Rodízios
+            </button>
+            <button @click="showNotice('Alerta de Revisões')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:wrench" class="text-amber-400"></iconify-icon> Revisões Preventivas
+            </button>
+          </div>
+        </div>
+
+        <!-- Menu Cadastros -->
+        <div class="relative">
+          <button
+            type="button"
+            @click.stop="toggleMenu('cadastros')"
+            :class="activeMenu === 'cadastros' ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800/70 text-zinc-300'"
+            class="px-2.5 py-1 rounded text-xs transition cursor-pointer flex items-center gap-1"
+          >
+            <span>Cadastros</span>
+          </button>
+          <div
+            x-show="activeMenu === 'cadastros'"
+            class="absolute left-0 mt-1 w-52 rounded-lg bg-zinc-900 border border-zinc-700/80 shadow-2xl py-1.5 z-50 text-zinc-200"
+            @click.outside="closeAllMenus()"
+          >
+            <button @click="showNotice('Cadastro de Veículos')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:plus"></iconify-icon> Novo Veículo
+            </button>
+            <button @click="showNotice('Cadastro de Motoristas')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:user-plus"></iconify-icon> Novo Condutor
+            </button>
+            <button @click="showNotice('Cadastro de Peças & Oficinas')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:store"></iconify-icon> Oficinas e Postos
+            </button>
+          </div>
+        </div>
+
+        <!-- Menu Visualizar -->
+        <div class="relative">
+          <button
+            type="button"
+            @click.stop="toggleMenu('visualizar')"
+            :class="activeMenu === 'visualizar' ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800/70 text-zinc-300'"
+            class="px-2.5 py-1 rounded text-xs transition cursor-pointer flex items-center gap-1"
+          >
+            <span>Visualizar</span>
+          </button>
+          <div
+            x-show="activeMenu === 'visualizar'"
+            class="absolute left-0 mt-1 w-52 rounded-lg bg-zinc-900 border border-zinc-700/80 shadow-2xl py-1.5 z-50 text-zinc-200"
+            @click.outside="closeAllMenus()"
+          >
+            <button @click="toggleEditMode()" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:edit-3"></iconify-icon> Alternar Modo de Edição
+            </button>
+            <button @click="isCatalogOpen = !isCatalogOpen" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:sidebar"></iconify-icon> Catálogo Lateral
+            </button>
+            <button @click="toggleFullscreen()" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:maximize-2"></iconify-icon> Modo Tela Cheia (F11)
+            </button>
+          </div>
+        </div>
+
+        <!-- Menu Ajuda -->
+        <div class="relative">
+          <button
+            type="button"
+            @click.stop="toggleMenu('ajuda')"
+            :class="activeMenu === 'ajuda' ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800/70 text-zinc-300'"
+            class="px-2.5 py-1 rounded text-xs transition cursor-pointer flex items-center gap-1"
+          >
+            <span>Ajuda</span>
+          </button>
+          <div
+            x-show="activeMenu === 'ajuda'"
+            class="absolute left-0 mt-1 w-52 rounded-lg bg-zinc-900 border border-zinc-700/80 shadow-2xl py-1.5 z-50 text-zinc-200"
+            @click.outside="closeAllMenus()"
+          >
+            <button @click="showNotice('Manual do Operador v2.4')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:book-open"></iconify-icon> Manual do Sistema
+            </button>
+            <button @click="showNotice('Suporte: suporte@tiagofranca.com')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2">
+              <iconify-icon icon="lucide:help-circle"></iconify-icon> Contatar Suporte
+            </button>
+            <div class="my-1 border-t border-zinc-800"></div>
+            <button @click="showNotice('Frota Full v1.0 - Gestão Avançada de Frotas')" class="w-full text-left px-3 py-1.5 hover:bg-zinc-800 flex items-center gap-2 text-zinc-400">
+              <iconify-icon icon="lucide:info"></iconify-icon> Sobre o Frota Full
+            </button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Banner informativo do Modo de Edição -->
+    <div
+      x-show="isEditing"
+      x-transition
+      class="bg-amber-950/70 border-b border-amber-800/60 px-4 py-2 flex items-center justify-between text-xs text-amber-200"
+    >
+      <div class="flex items-center gap-2">
+        <iconify-icon icon="lucide:alert-circle" class="text-base text-amber-400"></iconify-icon>
+        <span><strong>Modo de Edição Ativo:</strong> Arraste os cards para reorganizar a ordem, clique no <strong class="text-rose-400">✕</strong> para remover do desktop, ou use as setas para reposicionar.</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          @click="isCatalogOpen = true"
+          class="px-2 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-medium cursor-pointer"
+        >
+          + Adicionar Atalho
+        </button>
+        <button
+          type="button"
+          @click="toggleEditMode()"
+          class="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium cursor-pointer"
+        >
+          Concluir
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. CANVAS DO WORKSPACE COM BOTÕES GRANDES E RESPONSIVOS -->
+    <main
+      class="flex-1 p-6 md:p-8 overflow-y-auto relative"
+      :class="{ 'bg-zinc-950 ring-2 ring-inset ring-amber-500/20': isEditing }"
+    >
+      <!-- Grade Responsiva com Colunas Ajustáveis e Menor Densidade -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5 md:gap-6 max-w-7xl mx-auto">
+        <template x-for="(item, index) in desktopItems" :key="item.id">
+          <div
+            class="relative group flex flex-col items-center justify-center p-5 rounded-2xl border transition-all duration-200 select-none cursor-pointer"
+            :class="[
+              isEditing 
+                ? 'bg-zinc-900/90 border-zinc-700/80 hover:border-amber-400/60 hover:shadow-lg shadow-zinc-950/50 cursor-grab active:cursor-grabbing' 
+                : 'bg-zinc-900/60 hover:bg-zinc-800/80 border-zinc-800/80 hover:border-zinc-600 hover:scale-[1.03] active:scale-95 shadow-md hover:shadow-xl',
+              draggedIndex === index ? 'opacity-40 ring-2 ring-amber-400 border-dashed border-amber-400 scale-95' : '',
+              dragOverIndex === index && draggedIndex !== index ? 'ring-2 ring-emerald-500 border-emerald-500 scale-105' : ''
+            ]"
+            :draggable="isEditing"
+            @dragstart="onDragStart($event, index)"
+            @dragover.prevent="onDragOver($event, index)"
+            @dragleave="onDragLeave(index)"
+            @drop.prevent="onDrop(index)"
+            @dragend="onDragEnd()"
+            @click="handleModuleClick(item)"
+          >
+
+            <!-- Botão Remover no Modo de Edição -->
+            <button
+              x-show="isEditing"
+              type="button"
+              @click.stop="removeItem(index)"
+              class="absolute -top-2.5 -right-2.5 w-7 h-7 bg-rose-600 hover:bg-rose-500 text-white rounded-full flex items-center justify-center text-xs shadow-lg transition-transform hover:scale-110 z-30 cursor-pointer border-2 border-zinc-900"
+              title="Remover atalho"
+            >
+              <iconify-icon icon="lucide:x" class="text-sm"></iconify-icon>
+            </button>
+
+            <!-- Controles Manuais de Ordenação (Útil para Mobile ou Teclado) -->
+            <div
+              x-show="isEditing"
+              class="absolute -top-2.5 left-2 flex items-center gap-1 z-30 bg-zinc-900/90 border border-zinc-700 rounded-md px-1 py-0.5 shadow-md"
+            >
+              <button
+                type="button"
+                @click.stop="moveItem(index, -1)"
+                :disabled="index === 0"
+                class="hover:text-emerald-400 disabled:opacity-30 disabled:hover:text-zinc-500 text-zinc-400 text-xs px-0.5 cursor-pointer"
+                title="Mover para esquerda"
+              >
+                ◀
+              </button>
+              <button
+                type="button"
+                @click.stop="moveItem(index, 1)"
+                :disabled="index === desktopItems.length - 1"
+                class="hover:text-emerald-400 disabled:opacity-30 disabled:hover:text-zinc-500 text-zinc-400 text-xs px-0.5 cursor-pointer"
+                title="Mover para direita"
+              >
+                ▶
+              </button>
+            </div>
+
+            <!-- Ícone Gigante com Container Estilizado -->
+            <div
+              class="relative w-20 h-20 md:w-22 md:h-22 rounded-2xl flex items-center justify-center shadow-inner transition-all duration-200 border"
+              :class="item.bgClass || 'bg-zinc-800/80 border-zinc-700/60 text-zinc-100 group-hover:border-zinc-500'"
+            >
+              <!-- Iconify Web Component com tamanho expressivo (44px) -->
+              <iconify-icon :icon="item.icon" class="text-[44px] transition-transform duration-200 group-hover:scale-110"></iconify-icon>
+
+              <!-- Status Badge (Avisos de Alerta / Contagens) -->
+              <template x-if="item.badge">
+                <span
+                  class="absolute -top-2 -right-2 px-2 py-0.5 text-[10px] font-bold tracking-tight rounded-full border shadow-md flex items-center gap-1 whitespace-nowrap"
+                  :class="{
+                    'bg-rose-500/20 text-rose-300 border-rose-500/80': item.badge.type === 'danger',
+                    'bg-amber-500/20 text-amber-300 border-amber-500/80': item.badge.type === 'warning',
+                    'bg-emerald-500/20 text-emerald-300 border-emerald-500/80': item.badge.type === 'success',
+                    'bg-sky-500/20 text-sky-300 border-sky-500/80': item.badge.type === 'info'
+                  }"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full" :class="{
+                    'bg-rose-400 animate-pulse': item.badge.type === 'danger',
+                    'bg-amber-400': item.badge.type === 'warning',
+                    'bg-emerald-400': item.badge.type === 'success',
+                    'bg-sky-400': item.badge.type === 'info'
+                  }"></span>
+                  <span x-text="item.badge.text"></span>
+                </span>
+              </template>
+            </div>
+
+            <!-- Nome do Módulo e Descrição -->
+            <div class="mt-3.5 text-center w-full px-1">
+              <p
+                class="font-semibold text-sm text-zinc-100 group-hover:text-emerald-400 transition-colors line-clamp-1"
+                x-text="item.title"
+              ></p>
+              <p
+                class="text-[11px] text-zinc-400 group-hover:text-zinc-300 mt-0.5 line-clamp-1 truncate"
+                x-text="item.subtitle"
+              ></p>
+            </div>
+
+            <!-- Indicador sutil de arraste durante edição -->
+            <div x-show="isEditing" class="mt-2 text-zinc-500 text-[10px] flex items-center gap-1 font-mono">
+              <iconify-icon icon="lucide:grip-horizontal"></iconify-icon>
+              <span>Posição #<span x-text="index + 1"></span></span>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Estado Vazio caso remova todos os ícones -->
+      <div
+        x-show="desktopItems.length === 0"
+        class="h-80 flex flex-col items-center justify-center text-center gap-3 text-zinc-500"
+      >
+        <iconify-icon icon="lucide:layout-template" class="text-5xl text-zinc-600"></iconify-icon>
+        <p class="text-sm">Nenhum módulo fixado na sua área de trabalho.</p>
+        <button
+          type="button"
+          @click="isCatalogOpen = true"
+          class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium cursor-pointer shadow-md"
+        >
+          Abrir Catálogo de Módulos
+        </button>
+      </div>
+    </main>
+
+    <!-- 3. GAVETA LATERAL: CATÁLOGO DE MÓDULOS DISPONÍVEIS -->
+    <aside
+      x-show="isCatalogOpen"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 translate-x-full"
+      x-transition:enter-end="opacity-100 translate-x-0"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 translate-x-0"
+      x-transition:leave-end="opacity-0 translate-x-full"
+      class="fixed inset-y-0 right-0 w-88 bg-zinc-900 border-l border-zinc-700/80 shadow-2xl p-5 flex flex-col z-50"
+      @click.outside="isCatalogOpen = false"
+    >
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+        <div class="flex items-center gap-2">
+          <iconify-icon icon="lucide:library" class="text-emerald-400 text-lg"></iconify-icon>
+          <h2 class="text-sm font-bold text-zinc-100">Biblioteca de Módulos</h2>
+        </div>
+        <button
+          @click="isCatalogOpen = false"
+          class="w-7 h-7 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center cursor-pointer transition"
+        >
+          <iconify-icon icon="lucide:x" class="text-base"></iconify-icon>
+        </button>
+      </div>
+
+      <p class="text-xs text-zinc-400 my-3">
+        Clique no botão <strong class="text-emerald-400 font-semibold">+ Adicionar</strong> para fixar o atalho no seu workspace:
+      </p>
+
+      <div class="flex-1 overflow-y-auto space-y-2.5 pr-1">
+        <template x-for="module in availableCatalog" :key="module.id">
+          <div
+            class="flex items-center justify-between p-3 rounded-xl border border-zinc-800 bg-zinc-950/60 hover:bg-zinc-800/50 hover:border-zinc-700 transition"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-11 h-11 rounded-lg flex items-center justify-center text-2xl border"
+                :class="module.bgClass || 'bg-zinc-800 border-zinc-700 text-zinc-200'"
+              >
+                <iconify-icon :icon="module.icon"></iconify-icon>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-zinc-200" x-text="module.title"></p>
+                <p class="text-[11px] text-zinc-400" x-text="module.subtitle"></p>
+                <span class="inline-block mt-0.5 text-[9px] font-mono px-1.5 py-0.2 bg-zinc-800 text-zinc-400 rounded" x-text="module.category"></span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              @click="addModuleToDesktop(module)"
+              class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white border border-emerald-500/40 transition cursor-pointer flex items-center gap-1 shadow-xs"
+            >
+              <iconify-icon icon="lucide:plus"></iconify-icon>
+              <span>Fixar</span>
+            </button>
+          </div>
+        </template>
+
+        <div x-show="availableCatalog.length === 0" class="py-8 text-center text-xs text-zinc-500">
+          Todos os módulos já estão presentes no seu Desktop!
+        </div>
+      </div>
+    </aside>
+
+    <!-- 4. TASKBAR INFERIOR (Status Bar Estilo Desktop OS) -->
+    <footer class="h-11 bg-zinc-900 border-t border-zinc-800 px-4 flex items-center justify-between z-20 text-xs">
+      <!-- Lado Esquerdo: Status da Operação -->
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <span class="font-medium text-zinc-300">Frota Ativa: <strong class="text-emerald-400">42/45 veículos</strong></span>
+        </div>
+
+        <span class="text-zinc-700 hidden sm:inline">|</span>
+
+        <div class="hidden sm:flex items-center gap-2 text-zinc-400">
+          <iconify-icon icon="lucide:wrench" class="text-amber-400"></iconify-icon>
+          <span>3 em manutenção preventiva</span>
+        </div>
+      </div>
+
+      <!-- Lado Direito: Modo, Notificações e Relógio -->
+      <div class="flex items-center gap-4">
+        <!-- Indicador de modo de edição -->
+        <span
+          x-show="isEditing"
+          class="px-2 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/40"
+        >
+          LAYOUT CUSTOMIZÁVEL
+        </span>
+
+        <button
+          type="button"
+          @click="showNotice('Nenhum alerta crítico no momento.')"
+          class="text-zinc-400 hover:text-zinc-200 cursor-pointer flex items-center gap-1.5"
+          title="Central de Notificações"
+        >
+          <iconify-icon icon="lucide:bell" class="text-sm"></iconify-icon>
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+        </button>
+
+        <div class="flex items-center gap-1.5 font-mono text-zinc-300 bg-zinc-950 px-2 py-1 rounded border border-zinc-800">
+          <iconify-icon icon="lucide:clock" class="text-zinc-500"></iconify-icon>
+          <span x-text="currentTime"></span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Toast de Notificação Modal Rápido (Substitui alert()) -->
+    <div
+      x-show="toastMessage"
+      x-transition:enter="transition ease-out duration-150"
+      x-transition:enter-start="opacity-0 translate-y-3"
+      x-transition:enter-end="opacity-100 translate-y-0"
+      x-transition:leave="transition ease-in duration-100"
+      x-transition:leave-start="opacity-100 translate-y-0"
+      x-transition:leave-end="opacity-0 translate-y-3"
+      class="fixed bottom-14 left-1/2 -translate-x-1/2 bg-zinc-900 border border-emerald-500/50 text-zinc-100 px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs z-50"
+    >
+      <iconify-icon icon="lucide:check-circle" class="text-emerald-400 text-base"></iconify-icon>
+      <span x-text="toastMessage"></span>
+    </div>
+
+  </div>
+
+  <script>
+    function fleetWorkspace() {
+      return {
+        isEditing: false,
+        isCatalogOpen: false,
+        activeMenu: null,
+        draggedIndex: null,
+        dragOverIndex: null,
+        currentTime: '',
+        toastMessage: '',
+        toastTimeout: null,
+
+        // Módulos principais que compõem o Desktop Workspace
+        desktopItems: [
+          {
+            id: 'vehicles',
+            title: 'Veículos & Frota',
+            subtitle: 'Cadastro, status e telemetria',
+            icon: 'lucide:truck',
+            category: 'Operação',
+            bgClass: 'bg-emerald-950/40 border-emerald-700/60 text-emerald-300',
+            badge: { text: '3 parados', type: 'danger' },
+            route: '/frota/veiculos'
+          },
+          {
+            id: 'drivers',
+            title: 'Motoristas',
+            subtitle: 'Condutores, turnos e CNH',
+            icon: 'lucide:users',
+            category: 'Operação',
+            bgClass: 'bg-blue-950/40 border-blue-700/60 text-blue-300',
+            badge: { text: '1 CNH', type: 'warning' },
+            route: '/frota/motoristas'
+          },
+          {
+            id: 'fuel',
+            title: 'Abastecimento',
+            subtitle: 'Lançamentos e postos credenciados',
+            icon: 'lucide:fuel',
+            category: 'Operação',
+            bgClass: 'bg-amber-950/40 border-amber-700/60 text-amber-300',
+            badge: { text: 'Km/L', type: 'info' },
+            route: '/abastecimento'
+          },
+          {
+            id: 'maintenance',
+            title: 'Ordens de Serviço',
+            subtitle: 'Manutenções preventivas e corretivas',
+            icon: 'lucide:wrench',
+            category: 'Oficina',
+            bgClass: 'bg-orange-950/40 border-orange-700/60 text-orange-300',
+            badge: { text: '4 OS', type: 'warning' },
+            route: '/oficina/os'
+          },
+          {
+            id: 'tires',
+            title: 'Gestão de Pneus',
+            subtitle: 'Controle de eixos, sulco e recapagem',
+            icon: 'lucide:disc',
+            category: 'Oficina',
+            bgClass: 'bg-zinc-800 border-zinc-600 text-zinc-200',
+            route: '/oficina/pneus'
+          },
+          {
+            id: 'checklists',
+            title: 'Checklists Mobile',
+            subtitle: 'Inspeção de saída e fotos de avarias',
+            icon: 'lucide:clipboard-check',
+            category: 'Operação',
+            bgClass: 'bg-teal-950/40 border-teal-700/60 text-teal-300',
+            badge: { text: '100% OK', type: 'success' },
+            route: '/checklists'
+          },
+          {
+            id: 'fines',
+            title: 'Multas & Pontos',
+            subtitle: 'Autuações, condutor e vencimentos',
+            icon: 'lucide:alert-triangle',
+            category: 'Administrativo',
+            bgClass: 'bg-rose-950/40 border-rose-700/60 text-rose-300',
+            badge: { text: '2 novas', type: 'danger' },
+            route: '/multas'
+          },
+          {
+            id: 'costs',
+            title: 'Custos & CPK',
+            subtitle: 'Custo por km rodado e TCO',
+            icon: 'lucide:line-chart',
+            category: 'Financeiro',
+            bgClass: 'bg-violet-950/40 border-violet-700/60 text-violet-300',
+            route: '/financeiro/cpk'
+          }
+        ],
+
+        // Módulos extras disponíveis no catálogo lateral
+        availableCatalog: [
+          {
+            id: 'inventory',
+            title: 'Estoque de Peças',
+            subtitle: 'Almoxarifado, filtros e peças de reposição',
+            icon: 'lucide:boxes',
+            category: 'Oficina',
+            bgClass: 'bg-stone-900 border-stone-700 text-stone-200',
+            route: '/oficina/estoque'
+          },
+          {
+            id: 'tolls',
+            title: 'Pedágios & ConectCar',
+            subtitle: 'Extrato de tags eletrônicas e rotas',
+            icon: 'lucide:milestone',
+            category: 'Financeiro',
+            bgClass: 'bg-cyan-950/40 border-cyan-700 text-cyan-300',
+            route: '/financeiro/pedagios'
+          },
+          {
+            id: 'documents',
+            title: 'Documentos & IPVA',
+            subtitle: 'Licenciamento, vistorias e seguros',
+            icon: 'lucide:file-text',
+            category: 'Administrativo',
+            bgClass: 'bg-indigo-950/40 border-indigo-700 text-indigo-300',
+            route: '/administrativo/documentos'
+          },
+          {
+            id: 'cards',
+            title: 'Cartões de Frota',
+            subtitle: 'Ticket Log, Alelo Frota e limites',
+            icon: 'lucide:credit-card',
+            category: 'Financeiro',
+            bgClass: 'bg-emerald-950/40 border-emerald-700 text-emerald-300',
+            route: '/financeiro/cartoes'
+          }
+        ],
+
+        init() {
+          this.updateClock();
+          setInterval(() => this.updateClock(), 1000);
+        },
+
+        updateClock() {
+          const now = new Date();
+          this.currentTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        },
+
+        toggleEditMode() {
+          this.isEditing = !this.isEditing;
+          if (!this.isEditing) {
+            this.isCatalogOpen = false;
+            this.showNotice('Layout salvo com sucesso!');
+          } else {
+            this.showNotice('Modo de Edição ativado. Reorganize seus módulos.');
+          }
+        },
+
+        toggleMenu(menuKey) {
+          this.activeMenu = this.activeMenu === menuKey ? null : menuKey;
+        },
+
+        closeAllMenus() {
+          this.activeMenu = null;
+        },
+
+        handleModuleClick(item) {
+          if (this.isEditing) return;
+          this.showNotice(`Abrindo módulo: ${item.title} (${item.route})`);
+        },
+
+        // Drag & Drop HTML5 Handler
+        onDragStart(event, index) {
+          if (!this.isEditing) return;
+          this.draggedIndex = index;
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', index);
+        },
+
+        onDragOver(event, index) {
+          if (!this.isEditing) return;
+          this.dragOverIndex = index;
+        },
+
+        onDragLeave(index) {
+          if (this.dragOverIndex === index) {
+            this.dragOverIndex = null;
+          }
+        },
+
+        onDrop(targetIndex) {
+          if (!this.isEditing || this.draggedIndex === null) return;
+          if (this.draggedIndex !== targetIndex) {
+            const itemToMove = this.desktopItems.splice(this.draggedIndex, 1)[0];
+            this.desktopItems.splice(targetIndex, 0, itemToMove);
+            this.showNotice(`Módulo movido para a posição #${targetIndex + 1}`);
+          }
+          this.draggedIndex = null;
+          this.dragOverIndex = null;
+        },
+
+        onDragEnd() {
+          this.draggedIndex = null;
+          this.dragOverIndex = null;
+        },
+
+        // Ordenação manual através das setinhas
+        moveItem(index, delta) {
+          const newIndex = index + delta;
+          if (newIndex < 0 || newIndex >= this.desktopItems.length) return;
+          const [moved] = this.desktopItems.splice(index, 1);
+          this.desktopItems.splice(newIndex, 0, moved);
+        },
+
+        removeItem(index) {
+          const [removed] = this.desktopItems.splice(index, 1);
+          // Adiciona de volta ao catálogo se ainda não estiver presente
+          if (!this.availableCatalog.some(m => m.id === removed.id)) {
+            this.availableCatalog.push({
+              id: removed.id,
+              title: removed.title,
+              subtitle: removed.subtitle,
+              icon: removed.icon,
+              category: removed.category,
+              bgClass: removed.bgClass,
+              route: removed.route
+            });
+          }
+          this.showNotice(`"${removed.title}" removido da área de trabalho.`);
+        },
+
+        addModuleToDesktop(module) {
+          this.desktopItems.push({
+            id: module.id,
+            title: module.title,
+            subtitle: module.subtitle,
+            icon: module.icon,
+            category: module.category,
+            bgClass: module.bgClass,
+            route: module.route
+          });
+          this.availableCatalog = this.availableCatalog.filter(m => m.id !== module.id);
+          this.showNotice(`"${module.title}" adicionado à sua área de trabalho!`);
+        },
+
+        resetToDefaultWorkspace() {
+          this.desktopItems = [
+            { id: 'vehicles', title: 'Veículos & Frota', subtitle: 'Cadastro, status e telemetria', icon: 'lucide:truck', category: 'Operação', bgClass: 'bg-emerald-950/40 border-emerald-700/60 text-emerald-300', badge: { text: '3 parados', type: 'danger' }, route: '/frota/veiculos' },
+            { id: 'drivers', title: 'Motoristas', subtitle: 'Condutores, turnos e CNH', icon: 'lucide:users', category: 'Operação', bgClass: 'bg-blue-950/40 border-blue-700/60 text-blue-300', badge: { text: '1 CNH', type: 'warning' }, route: '/frota/motoristas' },
+            { id: 'fuel', title: 'Abastecimento', subtitle: 'Lançamentos e postos', icon: 'lucide:fuel', category: 'Operação', bgClass: 'bg-amber-950/40 border-amber-700/60 text-amber-300', badge: { text: 'Km/L', type: 'info' }, route: '/abastecimento' },
+            { id: 'maintenance', title: 'Ordens de Serviço', subtitle: 'Manutenções da oficina', icon: 'lucide:wrench', category: 'Oficina', bgClass: 'bg-orange-950/40 border-orange-700/60 text-orange-300', badge: { text: '4 OS', type: 'warning' }, route: '/oficina/os' },
+            { id: 'tires', title: 'Gestão de Pneus', subtitle: 'Controle de eixos e recapagem', icon: 'lucide:disc', category: 'Oficina', bgClass: 'bg-zinc-800 border-zinc-600 text-zinc-200', route: '/oficina/pneus' },
+            { id: 'checklists', title: 'Checklists Mobile', subtitle: 'Inspeção de saída e fotos', icon: 'lucide:clipboard-check', category: 'Operação', bgClass: 'bg-teal-950/40 border-teal-700/60 text-teal-300', badge: { text: '100% OK', type: 'success' }, route: '/checklists' }
+          ];
+          this.closeAllMenus();
+          this.showNotice('Área de trabalho restaurada para o padrão!');
+        },
+
+        toggleFullscreen() {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          } else {
+            document.exitFullscreen().catch(() => {});
+          }
+          this.closeAllMenus();
+        },
+
+        showNotice(message) {
+          this.toastMessage = message;
+          if (this.toastTimeout) clearTimeout(this.toastTimeout);
+          this.toastTimeout = setTimeout(() => {
+            this.toastMessage = '';
+          }, 2800);
+        }
+      };
+    }
+  </script>
+</body>
+</html>
