@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Command Palette - Alpine.js & Tailwind CSS</title>
+  <title>Fleet OS - Desktop Workspace</title>
 
   <!-- Tailwind CSS v4 CDN -->
   <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
@@ -11,323 +11,263 @@
   <!-- Alpine.js CDN -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col items-center justify-center p-6 select-none">
+<body class="bg-zinc-950 text-zinc-100 h-screen w-screen overflow-hidden select-none font-sans">
 
-  <!-- Instrução central na tela -->
-  <div class="text-center space-y-4">
-    <h1 class="text-2xl font-bold tracking-tight text-zinc-200">Painel Operacional de Frotas</h1>
-    <p class="text-sm text-zinc-400">
-      Pressione <kbd class="px-2 py-1 text-xs bg-zinc-800 border border-zinc-700 rounded text-zinc-300 font-mono">Ctrl + K</kbd> ou 
-      <kbd class="px-2 py-1 text-xs bg-zinc-800 border border-zinc-700 rounded text-zinc-300 font-mono">Cmd + K</kbd> para abrir o Command Palette.
-    </p>
-    <button
-      type="button"
-      @click="$dispatch('open-palette')"
-      class="px-4 py-2 text-sm font-medium bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg shadow-sm transition"
-    >
-      Abrir Paleta Manualmente
-    </button>
-  </div>
-
-  <!-- Componente Command Palette em Alpine.js -->
   <div
-    x-data="commandPalette()"
+    x-data="fleetWorkspace()"
     x-init="init()"
-    @keydown.window="handleGlobalKeydown($event)"
-    @open-palette.window="open()"
-    x-cloak
+    class="relative h-full w-full flex flex-col justify-between"
+    @contextmenu.prevent=""
   >
-    <!-- Backdrop Modal -->
-    <div
-      x-show="isOpen"
-      x-transition:enter="transition ease-out duration-150"
-      x-transition:enter-start="opacity-0"
-      x-transition:enter-end="opacity-100"
-      x-transition:leave="transition ease-in duration-100"
-      x-transition:leave-start="opacity-100"
-      x-transition:leave-end="opacity-0"
-      class="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/60 backdrop-blur-xs"
-      @click.self="close()"
-    >
-      <!-- Container do Modal -->
-      <div
-        x-show="isOpen"
-        x-transition:enter="transition ease-out duration-150"
-        x-transition:enter-start="opacity-0 scale-95"
-        x-transition:enter-end="opacity-100 scale-100"
-        x-transition:leave="transition ease-in duration-100"
-        x-transition:leave-start="opacity-100 scale-100"
-        x-transition:leave-end="opacity-0 scale-95"
-        class="w-full max-w-xl overflow-hidden rounded-xl bg-zinc-900 border border-zinc-700 shadow-2xl"
-        @keydown.arrow-down.prevent="selectNext()"
-        @keydown.arrow-up.prevent="selectPrev()"
-        @keydown.enter.prevent="executeCurrent()"
-        @keydown.escape.prevent="handleEscape()"
-        @keydown.backspace="handleBackspace($event)"
-      >
-        <!-- Header / Input -->
-        <div class="flex items-center gap-2 px-4 py-3 border-b border-zinc-800">
-          <template x-if="activeParent">
-            <span class="px-2 py-0.5 text-xs font-medium text-emerald-400 bg-emerald-950/60 border border-emerald-800 rounded">
-              <span x-text="activeParent.title"></span> &gt;
-            </span>
-          </template>
-
-          <input
-            x-ref="searchInput"
-            x-model="searchQuery"
-            type="text"
-            :placeholder="activeParent?.subqueryPlaceholder || 'Digite um comando ou pesquise...'"
-            class="flex-1 bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-hidden"
-          />
-
-          <kbd class="px-1.5 py-0.5 text-[10px] text-zinc-400 bg-zinc-800 border border-zinc-700 rounded font-mono">ESC</kbd>
-        </div>
-
-        <!-- Lista de Comandos -->
-        <ul class="max-h-80 overflow-y-auto p-2 space-y-1">
-          <template x-for="(item, index) in filteredItems" :key="item.id">
-            <li
-              :class="{
-                'bg-zinc-800 text-zinc-100': selectedIndex === index,
-                'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200': selectedIndex !== index
-              }"
-              class="flex items-center justify-between px-3 py-2 text-sm rounded-lg cursor-pointer transition-colors"
-              @mouseenter="selectedIndex = index"
-              @click="executeItem(item)"
-            >
-              <div class="flex flex-col">
-                <span class="font-medium text-zinc-200" x-text="item.title"></span>
-                <span x-show="item.description" class="text-xs text-zinc-500" x-text="item.description"></span>
-              </div>
-
-              <div class="flex items-center gap-2">
-                <!-- Botão de Favorito / Pin -->
-                <button
-                  type="button"
-                  class="text-xs text-zinc-500 hover:text-amber-400 p-1"
-                  @click.stop="togglePin(item.id)"
-                  x-text="item.isPinned ? '★' : '☆'"
-                ></button>
-
-                <!-- Atalhos de Teclado -->
-                <template x-if="item.shortcut">
-                  <span class="flex gap-1">
-                    <template x-for="key in item.shortcut" :key="key">
-                      <kbd
-                        class="px-1.5 py-0.5 text-[10px] bg-zinc-800 border border-zinc-700 rounded text-zinc-400 font-mono"
-                        x-text="key"
-                      ></kbd>
-                    </template>
-                  </span>
-                </template>
-              </div>
-            </li>
-          </template>
-
-          <!-- Empty State -->
-          <li x-show="filteredItems.length === 0" class="px-4 py-8 text-center text-xs text-zinc-500">
-            Nenhum comando ou resultado encontrado.
-          </li>
-        </ul>
+    <!-- Top Bar / Indicadores Rápidos -->
+    <header class="h-10 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 flex items-center justify-between px-4 z-10 text-xs">
+      <div class="flex items-center gap-3">
+        <span class="font-bold tracking-wider text-emerald-400">FLEET<span class="text-zinc-400">OS</span></span>
+        <span class="text-zinc-600">|</span>
+        <span class="text-zinc-400">Tenant: <strong class="text-zinc-200">Matriz Operacional</strong></span>
       </div>
-    </div>
+
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          @click="toggleEditMode()"
+          :class="isEditing ? 'bg-amber-500/20 text-amber-300 border-amber-500/50' : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:bg-zinc-700'"
+          class="px-2.5 py-1 rounded border transition flex items-center gap-1.5 cursor-pointer font-medium"
+        >
+          <span x-show="!isEditing">⚙️ Customizar Workspace</span>
+          <span x-show="isEditing">✓ Concluir Edição</span>
+        </button>
+
+        <button
+          x-show="isEditing"
+          type="button"
+          @click="isCatalogOpen = true"
+          class="px-2.5 py-1 rounded border border-emerald-600 bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/50 transition cursor-pointer font-medium"
+        >
+          + Adicionar Módulo
+        </button>
+      </div>
+    </header>
+
+    <!-- Canvas do Desktop (Workspace Grid) -->
+    <main
+      class="flex-1 p-6 relative overflow-auto grid grid-cols-[repeat(auto-fill,minmax(110px,1fr))] auto-rows-[110px] gap-4 content-start"
+      :class="{ 'bg-zinc-900/30 ring-1 ring-inset ring-amber-500/20': isEditing }"
+    >
+      <template x-for="(item, index) in desktopItems" :key="item.id">
+        <div
+          class="relative flex flex-col items-center justify-center p-2 rounded-xl group transition-all duration-150 cursor-pointer"
+          :class="{
+            'hover:bg-zinc-800/60 active:scale-95': !isEditing,
+            'ring-2 ring-dashed ring-amber-400/50 bg-zinc-900/80 animate-pulse': isEditing && draggedItemIndex === index,
+            'hover:ring-1 hover:ring-zinc-600 bg-zinc-900/40': isEditing
+          }"
+          :draggable="isEditing"
+          @dragstart="handleDragStart(index)"
+          @dragover.prevent="handleDragOver(index)"
+          @drop="handleDrop(index)"
+          @dragend="handleDragEnd()"
+          @click="handleItemClick(item)"
+        >
+          <!-- Botão Remover (visível no modo de edição) -->
+          <button
+            x-show="isEditing"
+            type="button"
+            @click.stop="removeItem(index)"
+            class="absolute -top-1 -right-1 w-5 h-5 bg-rose-600 hover:bg-rose-500 text-white rounded-full flex items-center justify-center text-xs shadow-md z-20 cursor-pointer"
+            title="Remover do Desktop"
+          >
+            ✕
+          </button>
+
+          <!-- Ícone do Módulo -->
+          <div class="relative w-14 h-14 rounded-2xl bg-zinc-800/90 border border-zinc-700/80 flex items-center justify-center text-2xl shadow-lg group-hover:scale-105 group-hover:border-zinc-500 transition">
+            <span x-text="item.icon"></span>
+
+            <!-- Badge Operacional Dinâmico -->
+            <template x-if="item.badge">
+              <span
+                class="absolute -top-1 -right-1 px-1.5 py-0.2 text-[10px] font-bold rounded-full border shadow-sm"
+                :class="{
+                  'bg-rose-500/20 text-rose-300 border-rose-500': item.badge.type === 'danger',
+                  'bg-amber-500/20 text-amber-300 border-amber-500': item.badge.type === 'warning',
+                  'bg-emerald-500/20 text-emerald-300 border-emerald-500': item.badge.type === 'success'
+                }"
+                x-text="item.badge.count"
+              ></span>
+            </template>
+          </div>
+
+          <!-- Nome do Módulo -->
+          <span
+            class="mt-2 text-xs font-medium text-center text-zinc-300 group-hover:text-white line-clamp-1 truncate w-full"
+            x-text="item.title"
+          ></span>
+        </div>
+      </template>
+
+      <!-- Mensagem caso desktop esteja vazio -->
+      <div
+        x-show="desktopItems.length === 0"
+        class="col-span-full h-64 flex flex-col items-center justify-center text-zinc-500 gap-2"
+      >
+        <span>Área de trabalho vazia.</span>
+        <button
+          type="button"
+          @click="isCatalogOpen = true"
+          class="text-xs text-emerald-400 underline hover:text-emerald-300"
+        >
+          Adicionar atalhos da biblioteca
+        </button>
+      </div>
+    </main>
+
+    <!-- Gaveta / Modal de Biblioteca de Módulos -->
+    <aside
+      x-show="isCatalogOpen"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0 translate-x-full"
+      x-transition:enter-end="opacity-100 translate-x-0"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100 translate-x-0"
+      x-transition:leave-end="opacity-0 translate-x-full"
+      class="fixed inset-y-0 right-0 w-80 bg-zinc-900 border-l border-zinc-800 shadow-2xl p-4 flex flex-col z-30"
+      @click.outside="isCatalogOpen = false"
+    >
+      <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
+        <h2 class="text-sm font-semibold text-zinc-100">Catálogo de Módulos</h2>
+        <button @click="isCatalogOpen = false" class="text-zinc-400 hover:text-white text-sm">✕</button>
+      </div>
+
+      <p class="text-xs text-zinc-400 py-3">Clique para fixar o módulo na sua área de trabalho:</p>
+
+      <div class="flex-1 overflow-y-auto space-y-2 pr-1">
+        <template x-for="module in availableModules" :key="module.id">
+          <div
+            class="flex items-center justify-between p-2.5 rounded-lg border border-zinc-800 bg-zinc-950/40 hover:bg-zinc-800/50 transition cursor-pointer"
+            @click="addModuleToDesktop(module)"
+          >
+            <div class="flex items-center gap-3">
+              <span class="text-xl" x-text="module.icon"></span>
+              <div>
+                <p class="text-xs font-medium text-zinc-200" x-text="module.title"></p>
+                <p class="text-[10px] text-zinc-500" x-text="module.category"></p>
+              </div>
+            </div>
+            <span class="text-xs text-emerald-400 font-bold">+</span>
+          </div>
+        </template>
+      </div>
+    </aside>
+
+    <!-- Rodapé / Barra de Tarefas (Taskbar Desktop) -->
+    <footer class="h-12 bg-zinc-900/95 border-t border-zinc-800 px-4 flex items-center justify-between z-10">
+      <div class="flex items-center gap-2">
+        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+        <span class="text-xs text-zinc-400 font-mono">Frota Operacional: <strong class="text-zinc-200">94% ativa</strong></span>
+      </div>
+
+      <div class="flex items-center gap-4 text-xs font-mono text-zinc-400">
+        <span x-text="currentTime"></span>
+      </div>
+    </footer>
   </div>
 
   <script>
-    function commandPalette() {
+    function fleetWorkspace() {
       return {
-        isOpen: false,
-        searchQuery: '',
-        selectedIndex: 0,
-        activeParent: null,
-        subqueryItems: [],
-        recentIds: [],
-        commands: [
-          {
-            id: 'nav-vehicles',
-            title: 'Listar Veículos',
-            description: 'Frota ativa, em oficina e desativados',
-            keywords: ['frota', 'carros', 'caminhoes', 'placas'],
-            shortcut: ['G', 'V'],
-            isPinned: true,
-            actionType: 'navigate',
-            target: '/veiculos'
-          },
-          {
-            id: 'search-plate',
-            title: 'Pesquisar Veículo por Placa',
-            description: 'Busca rápida de veículo e histórico de OS',
-            keywords: ['placa', 'chassi', 'buscar'],
-            actionType: 'subquery',
-            subqueryPlaceholder: 'Digite a placa (ex: ABC-1234)...',
-            fetchOptions: async (term) => {
-              // Simulação de resposta com delay/filtro de API
-              const mockPlates = [
-                { id: 'v-1', title: 'ABC-1234 — Scania R450', description: 'Ativo • Em rota', actionType: 'navigate', target: '/veiculos/1' },
-                { id: 'v-2', title: 'XYZ-9876 — Volvo FH 540', description: 'Oficina • Troca de Óleo', actionType: 'navigate', target: '/veiculos/2' },
-                { id: 'v-3', title: 'BRA-2E19 — Mercedes-Benz Actros', description: 'Ativo • Pátio Central', actionType: 'navigate', target: '/veiculos/3' }
-              ];
-              if (!term) return mockPlates;
-              return mockPlates.filter(p => p.title.toLowerCase().includes(term.toLowerCase()));
-            }
-          },
-          {
-            id: 'action-fuel',
-            title: 'Registrar Abastecimento',
-            description: 'Novo lançamento de combustível e km',
-            keywords: ['diesel', 'gasolina', 'combustivel', 'posto'],
-            actionType: 'action',
-            callback: () => alert('Modal de Abastecimento disparado!')
-          },
-          {
-            id: 'nav-maintenance',
-            title: 'Ordens de Serviço (OS)',
-            description: 'Manutenções corretivas e preventivas',
-            keywords: ['oficina', 'conserto', 'revisao', 'oleo'],
-            actionType: 'navigate',
-            target: '/manutencao'
-          },
-          {
-            id: 'nav-tires',
-            title: 'Gestão de Pneus',
-            description: 'Posicionamento em eixos e histórico de recapagem',
-            keywords: ['pneu', 'rodizio', 'sulco'],
-            actionType: 'navigate',
-            target: '/pneus'
-          }
+        isEditing: false,
+        isCatalogOpen: false,
+        draggedItemIndex: null,
+        currentTime: '',
+
+        // Itens atualmente no Desktop
+        desktopItems: [
+          { id: 'vehicles', title: 'Veículos', icon: '🚛', badge: { count: '3 parados', type: 'danger' }, route: '/veiculos' },
+          { id: 'drivers', title: 'Motoristas', icon: '👨‍✈️', badge: { count: '1 CNH', type: 'warning' }, route: '/motoristas' },
+          { id: 'fuel', title: 'Abastecimento', icon: '⛽', route: '/abastecimento' },
+          { id: 'maintenance', title: 'Ordens de Serviço', icon: '🔧', badge: { count: '4 OS', type: 'warning' }, route: '/manutencao' },
+          { id: 'tires', title: 'Gestão de Pneus', icon: '🛞', route: '/pneus' },
+          { id: 'checklists', title: 'Checklists', icon: '📋', route: '/checklists' },
+          { id: 'fines', title: 'Multas & Infrações', icon: '🚨', route: '/multas' },
+          { id: 'costs', title: 'Custo por KM (CPK)', icon: '📊', route: '/relatorios/cpk' }
+        ],
+
+        // Catálogo de todos os módulos disponíveis para adicionar
+        availableModules: [
+          { id: 'telemetry', title: 'Telemetria em Tempo Real', icon: '📡', category: 'Operação', route: '/telemetria' },
+          { id: 'inventory', title: 'Estoque de Peças', icon: '📦', category: 'Oficina', route: '/estoque' },
+          { id: 'toll', title: 'Gestão de Pedágios', icon: '🛣️', category: 'Financeiro', route: '/pedagios' },
+          { id: 'cards', title: 'Cartões de Combustível', icon: '💳', category: 'Financeiro', route: '/cartoes' },
+          { id: 'documents', title: 'Documentos & IPVA', icon: '📄', category: 'Administrativo', route: '/documentos' }
         ],
 
         init() {
-          this.$watch('searchQuery', async (val) => {
-            if (this.activeParent && this.activeParent.fetchOptions) {
-              this.subqueryItems = await this.activeParent.fetchOptions(val);
-              this.selectedIndex = 0;
-            }
+          this.updateClock();
+          setInterval(() => this.updateClock(), 1000);
+        },
+
+        updateClock() {
+          const now = new Date();
+          this.currentTime = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        },
+
+        toggleEditMode() {
+          this.isEditing = !this.isEditing;
+          if (!this.isEditing) {
+            this.isCatalogOpen = false;
+          }
+        },
+
+        handleItemClick(item) {
+          if (this.isEditing) return;
+          alert(`Abrindo módulo: ${item.title} (${item.route})`);
+        },
+
+        // Drag and Drop Logic
+        handleDragStart(index) {
+          this.draggedItemIndex = index;
+        },
+
+        handleDragOver(index) {
+          // Permite drop
+        },
+
+        handleDrop(targetIndex) {
+          if (this.draggedItemIndex === null || this.draggedItemIndex === targetIndex) return;
+
+          const movedItem = this.desktopItems.splice(this.draggedItemIndex, 1)[0];
+          this.desktopItems.splice(targetIndex, 0, movedItem);
+          this.draggedItemIndex = null;
+        },
+
+        handleDragEnd() {
+          this.draggedItemIndex = null;
+        },
+
+        removeItem(index) {
+          const removed = this.desktopItems.splice(index, 1)[0];
+          // Devolve para o catálogo se não existir lá
+          if (!this.availableModules.some(m => m.id === removed.id)) {
+            this.availableModules.push({
+              id: removed.id,
+              title: removed.title,
+              icon: removed.icon,
+              category: 'Módulos',
+              route: removed.route
+            });
+          }
+        },
+
+        addModuleToDesktop(module) {
+          this.desktopItems.push({
+            id: module.id,
+            title: module.title,
+            icon: module.icon,
+            route: module.route
           });
-        },
-
-        get filteredItems() {
-          if (this.activeParent) {
-            return this.subqueryItems;
-          }
-
-          const term = this.searchQuery.trim().toLowerCase();
-
-          if (!term) {
-            const pinned = this.commands.filter(i => i.isPinned);
-            const recents = this.recentIds
-              .map(id => this.commands.find(i => i.id === id))
-              .filter(i => i && !i.isPinned);
-            const others = this.commands.filter(i => !i.isPinned && !this.recentIds.includes(i.id));
-
-            return [...pinned, ...recents, ...others];
-          }
-
-          return this.commands.filter(item => {
-            const matchTitle = item.title.toLowerCase().includes(term);
-            const matchDesc = item.description?.toLowerCase().includes(term);
-            const matchKeywords = item.keywords?.some(k => k.toLowerCase().includes(term));
-            return matchTitle || matchDesc || matchKeywords;
-          });
-        },
-
-        open() {
-          this.isOpen = true;
-          this.searchQuery = '';
-          this.activeParent = null;
-          this.selectedIndex = 0;
-          this.$nextTick(() => this.$refs.searchInput.focus());
-        },
-
-        close() {
-          this.isOpen = false;
-          this.searchQuery = '';
-          this.activeParent = null;
-        },
-
-        handleGlobalKeydown(e) {
-          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-            e.preventDefault();
-            this.isOpen ? this.close() : this.open();
-          }
-        },
-
-        handleEscape() {
-          if (this.activeParent) {
-            this.activeParent = null;
-            this.searchQuery = '';
-            this.selectedIndex = 0;
-            return;
-          }
-          this.close();
-        },
-
-        handleBackspace(e) {
-          if (!this.searchQuery && this.activeParent) {
-            e.preventDefault();
-            this.activeParent = null;
-            this.subqueryItems = [];
-            this.selectedIndex = 0;
-          }
-        },
-
-        selectNext() {
-          const total = this.filteredItems.length;
-          if (total > 0) {
-            this.selectedIndex = (this.selectedIndex + 1) % total;
-          }
-        },
-
-        selectPrev() {
-          const total = this.filteredItems.length;
-          if (total > 0) {
-            this.selectedIndex = (this.selectedIndex - 1 + total) % total;
-          }
-        },
-
-        togglePin(id) {
-          const item = this.commands.find(c => c.id === id);
-          if (item) {
-            item.isPinned = !item.isPinned;
-          }
-        },
-
-        recordRecent(id) {
-          this.recentIds = [id, ...this.recentIds.filter(i => i !== id)].slice(0, 5);
-        },
-
-        async executeItem(item) {
-          if (!item) return;
-
-          if (item.actionType === 'subquery') {
-            this.activeParent = item;
-            this.searchQuery = '';
-            this.selectedIndex = 0;
-            if (item.fetchOptions) {
-              this.subqueryItems = await item.fetchOptions('');
-            }
-            return;
-          }
-
-          this.recordRecent(item.id);
-
-          if (item.actionType === 'navigate' && item.target) {
-            alert(`Navegando para: ${item.target}`);
-          }
-
-          if (item.actionType === 'action' && item.callback) {
-            item.callback();
-          }
-
-          this.close();
-        },
-
-        executeCurrent() {
-          const current = this.filteredItems[this.selectedIndex];
-          if (current) {
-            this.executeItem(current);
-          }
+          // Remove da lista do catálogo para não duplicar
+          this.availableModules = this.availableModules.filter(m => m.id !== module.id);
         }
       };
     }
