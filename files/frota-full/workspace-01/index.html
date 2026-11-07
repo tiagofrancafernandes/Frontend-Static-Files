@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Command Palette - Alpine.js & Tailwind CSS</title>
+
+  <!-- Tailwind CSS v4 CDN -->
+  <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen flex flex-col items-center justify-center p-6 select-none">
+
+  <!-- Instrução central na tela -->
+  <div class="text-center space-y-4">
+    <h1 class="text-2xl font-bold tracking-tight text-zinc-200">Painel Operacional de Frotas</h1>
+    <p class="text-sm text-zinc-400">
+      Pressione <kbd class="px-2 py-1 text-xs bg-zinc-800 border border-zinc-700 rounded text-zinc-300 font-mono">Ctrl + K</kbd> ou 
+      <kbd class="px-2 py-1 text-xs bg-zinc-800 border border-zinc-700 rounded text-zinc-300 font-mono">Cmd + K</kbd> para abrir o Command Palette.
+    </p>
+    <button
+      type="button"
+      @click="$dispatch('open-palette')"
+      class="px-4 py-2 text-sm font-medium bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-lg shadow-sm transition"
+    >
+      Abrir Paleta Manualmente
+    </button>
+  </div>
+
+  <!-- Componente Command Palette em Alpine.js -->
+  <div
+    x-data="commandPalette()"
+    x-init="init()"
+    @keydown.window="handleGlobalKeydown($event)"
+    @open-palette.window="open()"
+    x-cloak
+  >
+    <!-- Backdrop Modal -->
+    <div
+      x-show="isOpen"
+      x-transition:enter="transition ease-out duration-150"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-100"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      class="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/60 backdrop-blur-xs"
+      @click.self="close()"
+    >
+      <!-- Container do Modal -->
+      <div
+        x-show="isOpen"
+        x-transition:enter="transition ease-out duration-150"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-100"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+        class="w-full max-w-xl overflow-hidden rounded-xl bg-zinc-900 border border-zinc-700 shadow-2xl"
+        @keydown.arrow-down.prevent="selectNext()"
+        @keydown.arrow-up.prevent="selectPrev()"
+        @keydown.enter.prevent="executeCurrent()"
+        @keydown.escape.prevent="handleEscape()"
+        @keydown.backspace="handleBackspace($event)"
+      >
+        <!-- Header / Input -->
+        <div class="flex items-center gap-2 px-4 py-3 border-b border-zinc-800">
+          <template x-if="activeParent">
+            <span class="px-2 py-0.5 text-xs font-medium text-emerald-400 bg-emerald-950/60 border border-emerald-800 rounded">
+              <span x-text="activeParent.title"></span> &gt;
+            </span>
+          </template>
+
+          <input
+            x-ref="searchInput"
+            x-model="searchQuery"
+            type="text"
+            :placeholder="activeParent?.subqueryPlaceholder || 'Digite um comando ou pesquise...'"
+            class="flex-1 bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-hidden"
+          />
+
+          <kbd class="px-1.5 py-0.5 text-[10px] text-zinc-400 bg-zinc-800 border border-zinc-700 rounded font-mono">ESC</kbd>
+        </div>
+
+        <!-- Lista de Comandos -->
+        <ul class="max-h-80 overflow-y-auto p-2 space-y-1">
+          <template x-for="(item, index) in filteredItems" :key="item.id">
+            <li
+              :class="{
+                'bg-zinc-800 text-zinc-100': selectedIndex === index,
+                'text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200': selectedIndex !== index
+              }"
+              class="flex items-center justify-between px-3 py-2 text-sm rounded-lg cursor-pointer transition-colors"
+              @mouseenter="selectedIndex = index"
+              @click="executeItem(item)"
+            >
+              <div class="flex flex-col">
+                <span class="font-medium text-zinc-200" x-text="item.title"></span>
+                <span x-show="item.description" class="text-xs text-zinc-500" x-text="item.description"></span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <!-- Botão de Favorito / Pin -->
+                <button
+                  type="button"
+                  class="text-xs text-zinc-500 hover:text-amber-400 p-1"
+                  @click.stop="togglePin(item.id)"
+                  x-text="item.isPinned ? '★' : '☆'"
+                ></button>
+
+                <!-- Atalhos de Teclado -->
+                <template x-if="item.shortcut">
+                  <span class="flex gap-1">
+                    <template x-for="key in item.shortcut" :key="key">
+                      <kbd
+                        class="px-1.5 py-0.5 text-[10px] bg-zinc-800 border border-zinc-700 rounded text-zinc-400 font-mono"
+                        x-text="key"
+                      ></kbd>
+                    </template>
+                  </span>
+                </template>
+              </div>
+            </li>
+          </template>
+
+          <!-- Empty State -->
+          <li x-show="filteredItems.length === 0" class="px-4 py-8 text-center text-xs text-zinc-500">
+            Nenhum comando ou resultado encontrado.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function commandPalette() {
+      return {
+        isOpen: false,
+        searchQuery: '',
+        selectedIndex: 0,
+        activeParent: null,
+        subqueryItems: [],
+        recentIds: [],
+        commands: [
+          {
+            id: 'nav-vehicles',
+            title: 'Listar Veículos',
+            description: 'Frota ativa, em oficina e desativados',
+            keywords: ['frota', 'carros', 'caminhoes', 'placas'],
+            shortcut: ['G', 'V'],
+            isPinned: true,
+            actionType: 'navigate',
+            target: '/veiculos'
+          },
+          {
+            id: 'search-plate',
+            title: 'Pesquisar Veículo por Placa',
+            description: 'Busca rápida de veículo e histórico de OS',
+            keywords: ['placa', 'chassi', 'buscar'],
+            actionType: 'subquery',
+            subqueryPlaceholder: 'Digite a placa (ex: ABC-1234)...',
+            fetchOptions: async (term) => {
+              // Simulação de resposta com delay/filtro de API
+              const mockPlates = [
+                { id: 'v-1', title: 'ABC-1234 — Scania R450', description: 'Ativo • Em rota', actionType: 'navigate', target: '/veiculos/1' },
+                { id: 'v-2', title: 'XYZ-9876 — Volvo FH 540', description: 'Oficina • Troca de Óleo', actionType: 'navigate', target: '/veiculos/2' },
+                { id: 'v-3', title: 'BRA-2E19 — Mercedes-Benz Actros', description: 'Ativo • Pátio Central', actionType: 'navigate', target: '/veiculos/3' }
+              ];
+              if (!term) return mockPlates;
+              return mockPlates.filter(p => p.title.toLowerCase().includes(term.toLowerCase()));
+            }
+          },
+          {
+            id: 'action-fuel',
+            title: 'Registrar Abastecimento',
+            description: 'Novo lançamento de combustível e km',
+            keywords: ['diesel', 'gasolina', 'combustivel', 'posto'],
+            actionType: 'action',
+            callback: () => alert('Modal de Abastecimento disparado!')
+          },
+          {
+            id: 'nav-maintenance',
+            title: 'Ordens de Serviço (OS)',
+            description: 'Manutenções corretivas e preventivas',
+            keywords: ['oficina', 'conserto', 'revisao', 'oleo'],
+            actionType: 'navigate',
+            target: '/manutencao'
+          },
+          {
+            id: 'nav-tires',
+            title: 'Gestão de Pneus',
+            description: 'Posicionamento em eixos e histórico de recapagem',
+            keywords: ['pneu', 'rodizio', 'sulco'],
+            actionType: 'navigate',
+            target: '/pneus'
+          }
+        ],
+
+        init() {
+          this.$watch('searchQuery', async (val) => {
+            if (this.activeParent && this.activeParent.fetchOptions) {
+              this.subqueryItems = await this.activeParent.fetchOptions(val);
+              this.selectedIndex = 0;
+            }
+          });
+        },
+
+        get filteredItems() {
+          if (this.activeParent) {
+            return this.subqueryItems;
+          }
+
+          const term = this.searchQuery.trim().toLowerCase();
+
+          if (!term) {
+            const pinned = this.commands.filter(i => i.isPinned);
+            const recents = this.recentIds
+              .map(id => this.commands.find(i => i.id === id))
+              .filter(i => i && !i.isPinned);
+            const others = this.commands.filter(i => !i.isPinned && !this.recentIds.includes(i.id));
+
+            return [...pinned, ...recents, ...others];
+          }
+
+          return this.commands.filter(item => {
+            const matchTitle = item.title.toLowerCase().includes(term);
+            const matchDesc = item.description?.toLowerCase().includes(term);
+            const matchKeywords = item.keywords?.some(k => k.toLowerCase().includes(term));
+            return matchTitle || matchDesc || matchKeywords;
+          });
+        },
+
+        open() {
+          this.isOpen = true;
+          this.searchQuery = '';
+          this.activeParent = null;
+          this.selectedIndex = 0;
+          this.$nextTick(() => this.$refs.searchInput.focus());
+        },
+
+        close() {
+          this.isOpen = false;
+          this.searchQuery = '';
+          this.activeParent = null;
+        },
+
+        handleGlobalKeydown(e) {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            this.isOpen ? this.close() : this.open();
+          }
+        },
+
+        handleEscape() {
+          if (this.activeParent) {
+            this.activeParent = null;
+            this.searchQuery = '';
+            this.selectedIndex = 0;
+            return;
+          }
+          this.close();
+        },
+
+        handleBackspace(e) {
+          if (!this.searchQuery && this.activeParent) {
+            e.preventDefault();
+            this.activeParent = null;
+            this.subqueryItems = [];
+            this.selectedIndex = 0;
+          }
+        },
+
+        selectNext() {
+          const total = this.filteredItems.length;
+          if (total > 0) {
+            this.selectedIndex = (this.selectedIndex + 1) % total;
+          }
+        },
+
+        selectPrev() {
+          const total = this.filteredItems.length;
+          if (total > 0) {
+            this.selectedIndex = (this.selectedIndex - 1 + total) % total;
+          }
+        },
+
+        togglePin(id) {
+          const item = this.commands.find(c => c.id === id);
+          if (item) {
+            item.isPinned = !item.isPinned;
+          }
+        },
+
+        recordRecent(id) {
+          this.recentIds = [id, ...this.recentIds.filter(i => i !== id)].slice(0, 5);
+        },
+
+        async executeItem(item) {
+          if (!item) return;
+
+          if (item.actionType === 'subquery') {
+            this.activeParent = item;
+            this.searchQuery = '';
+            this.selectedIndex = 0;
+            if (item.fetchOptions) {
+              this.subqueryItems = await item.fetchOptions('');
+            }
+            return;
+          }
+
+          this.recordRecent(item.id);
+
+          if (item.actionType === 'navigate' && item.target) {
+            alert(`Navegando para: ${item.target}`);
+          }
+
+          if (item.actionType === 'action' && item.callback) {
+            item.callback();
+          }
+
+          this.close();
+        },
+
+        executeCurrent() {
+          const current = this.filteredItems[this.selectedIndex];
+          if (current) {
+            this.executeItem(current);
+          }
+        }
+      };
+    }
+  </script>
+</body>
+</html>
